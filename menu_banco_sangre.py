@@ -210,6 +210,42 @@ def editar_unidad_sangre(unidad_id):
     finally:
         conexion.close()
 
+def mostrar_detalles_unidad(unidad_id):
+    conexion = getConnection()
+    if conexion is None:
+        return
+
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT u.id, t.tipo, d.nombre_donante, l.nombre_ubicacion,
+                       u.fecha_hora_extraccion, u.fecha_caducidad
+                FROM unidad_sangre u
+                JOIN tipo_sangre t ON t.id = u.tipo_sangre_id
+                LEFT JOIN donante d ON d.id = u.donante_id
+                JOIN ubicacion l ON l.id = u.ubicacion_id
+                WHERE u.id = %s
+            """, (unidad_id,))
+
+            unidad = cursor.fetchone()
+
+            if unidad is None:
+                print("No existe una unidad con ese ID.")
+                return
+
+            print("\n========== DETALLES DE LA UNIDAD ==========")
+            print(f"ID: {unidad[0]}")
+            print(f"Tipo de sangre: {unidad[1]}")
+            print(f"Donante: {unidad[2] or 'Sin registrar'}")
+            print(f"Ubicación: {unidad[3]}")
+            print(f"Fecha de extracción: {unidad[4]}")
+            print(f"Fecha de caducidad: {unidad[5]}")
+
+    except Error as error:
+        print(f"Error al consultar la unidad: {error}")
+    finally:
+        conexion.close()
+
 
 def main():
     while True:
@@ -218,10 +254,14 @@ def main():
         print("2. Extraer una unidad de sangre")
         print("3. Mostrar unidades disponibles")
         print("4. Editar una unidad de sangre")
-        print("5. Salir")
+        print("5. Ver detalles de una unidad")
+        print("6. Salir")
+
         opcion = input("Seleccione una opción: ").strip()
+
         if opcion == "1":
             ingresar_unidad()
+
         elif opcion == "2":
             mostrar_unidades_actuales()
             try:
@@ -231,8 +271,10 @@ def main():
                 extraer_unidad_sangre(unidad_id)
             except ValueError:
                 print("Debe ingresar un ID numérico positivo.")
+
         elif opcion == "3":
             mostrar_unidades_actuales()
+
         elif opcion == "4":
             mostrar_unidades_actuales()
             try:
@@ -242,8 +284,20 @@ def main():
                 editar_unidad_sangre(unidad_id)
             except ValueError:
                 print("Debe ingresar un ID numérico positivo.")
+
         elif opcion == "5":
+            mostrar_unidades_actuales()
+            try:
+                unidad_id = int(input("ID de la unidad a consultar: "))
+                if unidad_id <= 0:
+                    raise ValueError
+                mostrar_detalles_unidad(unidad_id)
+            except ValueError:
+                print("Debe ingresar un ID numérico positivo.")
+
+        elif opcion == "6":
             break
+
         else:
             print("Opción inválida.")
 
