@@ -186,7 +186,79 @@ def obtener_todas_las_peticiones():
             cur.execute(query)
             return [dict(row) for row in cur.fetchall()]
 
+# ==========================================
+# UNIDADES DE SANGRE: listar y editar
+# (registrar_unidad_sangre ya existe arriba)
+# ==========================================
 
+def obtener_todas_las_unidades_sangre():
+    query = """
+        SELECT u.*, ts.tipo AS nombre_tipo_sangre,
+               d.nombre_donante, ub.nombre_ubicacion
+        FROM unidad_sangre u
+        JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id
+        LEFT JOIN donante d ON u.donante_id = d.id
+        LEFT JOIN ubicacion ub ON u.ubicacion_id = ub.id
+        ORDER BY u.id DESC;
+    """
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(query)
+            return [dict(r) for r in cur.fetchall()]
+
+
+def editar_unidad_sangre(unidad_id, tipo_sangre=None, nombre_donante=None,
+                         nombre_ubicacion=None, fecha_extraccion=None,
+                         fecha_caducidad=None):
+    campos, valores = [], []
+    with get_connection() as conn:
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SELECT id FROM unidad_sangre WHERE id = %s;", (unidad_id,))
+                if not cur.fetchone():
+                    raise ValueError(f"No existe la unidad con ID {unidad_id}.")
+
+                if tipo_sangre is not None:
+                    cur.execute("SELECT id FROM tipo_sangre WHERE tipo = %s;", (tipo_sangre,))
+                    r = cur.fetchone()
+                    if not r:
+                        raise ValueError(f"El tipo de sangre '{tipo_sangre}' no existe.")
+                    campos.append("tipo_sangre_id = %s"); valores.append(r["id"])
+
+                if nombre_donante is not None:
+                    cur.execute("SELECT id FROM donante WHERE nombre_donante = %s;", (nombre_donante,))
+                    r = cur.fetchone()
+                    if not r:
+                        raise ValueError(f"El donante '{nombre_donante}' no existe. Regístralo primero.")
+                    campos.append("donante_id = %s"); valores.append(r["id"])
+
+                if nombre_ubicacion is not None:
+                    cur.execute("SELECT id FROM ubicacion WHERE nombre_ubicacion = %s;", (nombre_ubicacion,))
+                    r = cur.fetchone()
+                    if not r:
+                        raise ValueError(f"La ubicación '{nombre_ubicacion}' no existe.")
+                    campos.append("ubicacion_id = %s"); valores.append(r["id"])
+
+                if fecha_extraccion is not None:
+                    campos.append("fecha_hora_extraccion = %s"); valores.append(fecha_extraccion)
+
+                if fecha_caducidad is not None:
+                    campos.append("fecha_caducidad = %s"); valores.append(fecha_caducidad)
+
+                if not campos:
+                    raise ValueError("Debes indicar al menos un campo a editar.")
+
+                valores.append(unidad_id)
+                cur.execute(
+                    f"UPDATE unidad_sangre SET {', '.join(campos)} WHERE id = %s RETURNING *;",
+                    tuple(valores),
+                )
+                resultado = dict(cur.fetchone())
+            conn.commit()
+            return resultado
+        except Exception:
+            conn.rollback()
+            raise
 # ejemplo de prueba
 #
 #if __name__ == "__main__":
