@@ -73,20 +73,29 @@ def apartado_de_ingreso():
                 else:
                     print(f"\nTotal: {len(peticiones)}")
                     for p in peticiones[:10]:
+                        print("\n ≻───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ─────────────────────≺ \n")
+
                         print(
                             f"- ID #{p['id']} | Sangre: {p['nombre_tipo_sangre']} "
                             f"| {p['cantidad_ml']} ml | Prioridad: {p['prioridad']} "
                             f"| Centro: {p.get('centro_salud', 'N/A')} "
                             f"| Fecha: {str(p.get('fecha_solicitud', ''))[:16]}"
                         )
+                    print("\n ≻───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ─────────────────────≺ \n")
+
             elif sub == "2":
                 try:
                     id_buscado = int(input("ID de la petición: ").strip())
                     p = obtener_peticion_por_id(id_buscado)
                     if p:
                         print("\nDetalle:")
+                        print("\n ◆═════════════════════════ ● ★ ● ══════════════════════════◆ \n")
+
                         for k, v in p.items():
                             print(f"  {k}: {v}")
+                        print("\n ◆═════════════════════════ ● ★ ● ══════════════════════════◆ \n")
+
+
                     else:
                         print(f"No existe la petición con ID {id_buscado}.")
                 except ValueError:
@@ -135,6 +144,7 @@ def apartado_de_ingreso():
                 else:
                     print(f"\nTotal: {len(unidades)}")
                     for u in unidades:
+                        print("\n ≻───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ─────────────────────≺ \n")
                         print(
                             f"- ID #{u['id']} | {u['nombre_tipo_sangre']} "
                             f"| Donante: {u['nombre_donante']} "
@@ -142,6 +152,8 @@ def apartado_de_ingreso():
                             f"| Extraída: {str(u['fecha_hora_extraccion'])[:16]} "
                             f"| Caduca: {u['fecha_caducidad']}"
                         )
+                    print("\n ≻───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ─────────────────────≺ \n")
+
             except Exception as e:
                 print(f"\n[ERROR]: {e}")
 
