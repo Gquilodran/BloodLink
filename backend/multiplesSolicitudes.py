@@ -1,6 +1,9 @@
 from datetime import datetime
-from solicitudd import (crear_peticion_sangre,obtener_todas_las_peticiones,obtener_peticion_por_id)
-
+from backend.solicitudd import (
+    crear_peticion_sangre,
+    obtener_todas_las_peticiones,
+    obtener_peticion_por_id,
+)
 
 def apartado_de_ingreso():
     while True:
