@@ -259,6 +259,33 @@ def editar_unidad_sangre(unidad_id, tipo_sangre=None, nombre_donante=None,
         except Exception:
             conn.rollback()
             raise
+
+def marcar_peticion_completa(id_peticion: int) -> dict:
+    """
+    Marca una petición como 'completada' y registra la fecha y hora.
+    Devuelve la fila actualizada o lanza un ValueError si el ID no existe.
+    """
+    with get_connection() as conn:
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    UPDATE peticion_sangre
+                    SET estado = 'completada', fecha_completada = NOW()
+                    WHERE id = %s
+                    RETURNING *;
+                    """,
+                    (id_peticion,),
+                )
+                fila = cur.fetchone()
+                if not fila:
+                    raise ValueError(f"No existe la petición con ID {id_peticion}.")
+                resultado = dict(fila)
+            conn.commit()
+            return resultado
+        except Exception:
+            conn.rollback()
+            raise
 # ejemplo de prueba
 #
 #if __name__ == "__main__":
