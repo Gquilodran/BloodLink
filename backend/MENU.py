@@ -153,7 +153,7 @@ def apartado_de_ingreso():
             print("┗━━━━━━━━━━━•°•☆•°•━━━━━━━━━━━┛")
             print("\n \n (Deja en blanco los campos que NO quieras cambiar)\n ")
             print("•┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈•⋆• ✧ •⋆• ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈•")            
-            
+
             try:
                 uid = int(input("ID de la unidad a editar: ").strip())
 
@@ -180,8 +180,21 @@ def apartado_de_ingreso():
                 print(f"\n[ERROR DE VALIDACIÓN]: {ve}")
             except Exception as e:
                 print(f"\n[ERROR DE BASE DE DATOS]: {e}")
+        # ---------- 6. FINALIZAR PETICIÓN (NUEVA OPCIÓN) ----------
+        elif opcion == 6:
+            print("\n ━━━━━━━━━ ☾ Finalizar Petición de Sangre ☽ ━━━━━━━━━ \n")
+            try:
+                pid = int(input("ID de la petición a finalizar: ").strip())
+                actualizada = marcar_peticion_completa(pid)
+                print(f"\nPetición #{actualizada['id']} marcada como COMPLETADA.")
+                print(f"  Estado: {actualizada['estado']}")
+                print(f"  Fecha de completado: {actualizada['fecha_completada']}")
+            except ValueError as ve:
+                print(f"\n[ERROR]: {ve}")
+            except Exception as e:
+                print(f"\n[ERROR DE BASE DE DATOS]: {e}")
 
-        # ---------- 6. SALIR ----------
+        # ---------- 7. SALIR ----------
         elif opcion == 6:
             print("╔════════ ❀•°❀°•❀ ════════╗")
             print("  Saliendo del sistema...")
