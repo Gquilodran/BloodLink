@@ -3,7 +3,7 @@ from datetime import datetime, date
 from psycopg2 import Error
 from connection_db import getConnection
 from operaciones_db import add_unidad_sangre, mostrar_unidades_actuales
-
+from backend.multiplesSolicitudes import apartado_de_ingreso
 
 def extraer_unidad_sangre(unidad_id):
     conexion = getConnection()
@@ -255,7 +255,8 @@ def main():
         print("3. Mostrar unidades disponibles")
         print("4. Editar una unidad de sangre")
         print("5. Ver detalles de una unidad")
-        print("6. Salir")
+        print("6 Solicitudes de sangre")
+        print("7. Salir")
 
         opcion = input("Seleccione una opción: ").strip()
 
@@ -294,8 +295,13 @@ def main():
                 mostrar_detalles_unidad(unidad_id)
             except ValueError:
                 print("Debe ingresar un ID numérico positivo.")
-
         elif opcion == "6":
+            try:
+                apartado_de_ingreso()
+            except:
+                print("Error al abrir apartado de solicitudes de sangre")
+
+        elif opcion == "7":
             break
 
         else:
