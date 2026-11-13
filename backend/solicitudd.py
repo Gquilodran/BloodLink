@@ -286,6 +286,24 @@ def marcar_peticion_completa(id_peticion: int) -> dict:
         except Exception:
             conn.rollback()
             raise
+
+
+def obtener_unidad_sangre_por_id(unidad_id: int):
+    """Obtiene una unidad de sangre específica por su ID (con nombre de tipo, donante y ubicación)."""
+    query = """
+        SELECT u.*, ts.tipo AS nombre_tipo_sangre,
+               d.nombre_donante, ub.nombre_ubicacion
+        FROM unidad_sangre u
+        JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id
+        LEFT JOIN donante d ON u.donante_id = d.id
+        LEFT JOIN ubicacion ub ON u.ubicacion_id = ub.id
+        WHERE u.id = %s;
+    """
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(query, (unidad_id,))
+            fila = cur.fetchone()
+            return dict(fila) if fila else None
 # ejemplo de prueba
 #
 #if __name__ == "__main__":

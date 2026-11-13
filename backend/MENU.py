@@ -3,10 +3,14 @@ from backend.solicitudd import (
     crear_peticion_sangre,
     obtener_todas_las_peticiones,
     obtener_peticion_por_id,
+    obtener_unidad_sangre_por_id,
     registrar_unidad_sangre,
     obtener_todas_las_unidades_sangre,
     editar_unidad_sangre,
+    marcar_peticion_completa, 
 )
+
+
 
 #LINK MARCADORES: https://mimidestino.blogspot.com/2019/02/separadores-para-amino-mimi-destino.html
 def apartado_de_ingreso():
@@ -85,10 +89,10 @@ def apartado_de_ingreso():
 
             elif sub == "2":
                 try:
-                    id_buscado = int(input("ID de la petición: ").strip())
+                    id_buscado = int(input("Ժ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ Ingresar ID de la petición: ").strip())
                     p = obtener_peticion_por_id(id_buscado)
                     if p:
-                        print("\nDetalle:")
+                        print("\n \n     Ժ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴Detalles de la petición:")
                         print("\n ◆═════════════════════════ ● ★ ● ══════════════════════════◆ \n")
 
                         for k, v in p.items():
@@ -134,33 +138,55 @@ def apartado_de_ingreso():
 
         # ---------- 4. VER UNIDADES ----------
         elif opcion == 4:
+
             print("\n •*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
             print("                           Unidades de Sangre ")
             print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.• \n \n ")
-            try:
-                unidades = obtener_todas_las_unidades_sangre()
-                if not unidades:
-                    print("No hay unidades registradas.")
-                else:
-                    print(f"\nTotal: {len(unidades)}")
-                    for u in unidades:
-                        print("\n ≻───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ─────────────────────≺ \n")
-                        print(
-                            f"- ID #{u['id']} | {u['nombre_tipo_sangre']} "
-                            f"| Donante: {u['nombre_donante']} "
-                            f"| Ubicación: {u['nombre_ubicacion']} "
-                            f"| Extraída: {str(u['fecha_hora_extraccion'])[:16]} "
-                            f"| Caduca: {u['fecha_caducidad']}"
-                        )
-                    print("\n ≻───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ─────────────────────≺ \n")
+            
 
-            except Exception as e:
-                print(f"\n[ERROR]: {e}")
+            sub = input("1. Ver todas  |  2. Buscar por ID: ").strip()
+
+            if sub == "1":
+                try:
+                    unidades = obtener_todas_las_unidades_sangre()
+                    if not unidades:
+                        print("No hay unidades registradas.")
+                    else:
+                        print(f"\nTotal: {len(unidades)}")
+                        for u in unidades:
+                            print("\n ≻───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ─────────────────────≺ \n")
+                            print(
+                                f"- ID #{u['id']} | {u['nombre_tipo_sangre']} "
+                                f"| Donante: {u['nombre_donante']} "
+                                f"| Ubicación: {u['nombre_ubicacion']} "
+                                f"| Extraída: {str(u['fecha_hora_extraccion'])[:16]} "
+                                f"| Caduca: {u['fecha_caducidad']}"
+                            )
+                        print("\n ≻───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ───────────────────── ⋆ ✩ ⋆ ─────────────────────≺ \n")
+                except Exception as e:
+                    print(f"\n[ERROR]: {e}")
+
+            elif sub == "2":
+                try:
+                    id_buscado = int(input("Ժ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴Ingresar ID de la unidad: ").strip())
+                    u = obtener_unidad_sangre_por_id(id_buscado)
+                    if u:
+                        print("\n \n     Ժ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ ╴ Detalle de la unidad: \n")
+                        print("\n ◆═════════════════════════ ● ★ ● ══════════════════════════◆ \n")
+
+                        for k, v in u.items():
+                            print(f"  {k}: {v}")
+                        print("\n ◆═════════════════════════ ● ★ ● ══════════════════════════◆ \n")
+
+                    else:
+                        print(f"No existe la unidad con ID {id_buscado}.")
+                except ValueError:
+                    print("El ID debe ser un número entero.")
 
         # ---------- 5. EDITAR UNIDAD ----------
         elif opcion == 5:
             print("\n \n ┏━━━━━━━━━━━•°•☆•°•━━━━━━━━━━━┓")
-            print("\Editar Unidad de Sangre")
+            print(" Editar Unidad de Sangre")
             print("┗━━━━━━━━━━━•°•☆•°•━━━━━━━━━━━┛\n \n ")
             print("\n \n (Deja en blanco los campos que NO quieras cambiar)\n \n ")
             print("•┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈•⋆• ✧ •⋆• ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈•")            
