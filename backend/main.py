@@ -12,6 +12,7 @@ import uvicorn
 from config import settings
 from db import init_db
 from routes.files import router as files_router
+from routes.donors import router as donors_router
 
 
 @asynccontextmanager
@@ -47,6 +48,7 @@ app.add_middleware(
 
 # Registrar rutas
 app.include_router(files_router)
+app.include_router(donors_router)
 
 # TODO: Registrar futuros routers:
 # app.include_router(auth_router)
