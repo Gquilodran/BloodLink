@@ -11,9 +11,9 @@ from backend.solicitudd import (
 #LINK MARCADORES: https://mimidestino.blogspot.com/2019/02/separadores-para-amino-mimi-destino.html
 def apartado_de_ingreso():
     while True:
-        print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
-        print("\n GESTIÓN DE EXISTENCIAS Y PETICIONES DE UNIDADES DE SANGRE \n")
-        print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
+        print("\n •*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
+        print("                GESTIÓN DE EXISTENCIAS Y PETICIONES DE UNIDADES DE SANGRE ")
+        print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.• \n \n ")
         print("1. Ingresar una nueva solicitud (petición)")
         print("2. Revisar solicitudes")
         print("3. Crear unidad de sangre")
@@ -31,9 +31,9 @@ def apartado_de_ingreso():
 
         # ---------- 1. NUEVA PETICIÓN ----------
         if opcion == 1:
-            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
-            print("\n Nueva Petición de Sangre \n")
-            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
+            print("\n •*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
+            print("                            Nueva Petición de Sangre ")
+            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•\n \n ")
             try:
                 tipo_sangre = input("Tipo de sangre solicitado: ").strip().upper()
                 cantidad_ml = float(input("Cantidad (ml): ").strip())
@@ -61,9 +61,9 @@ def apartado_de_ingreso():
 
         # ---------- 2. REVISAR PETICIONES ----------
         elif opcion == 2:
-            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
-            print("\n Revisar Solicitudes \n")
-            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
+            print("\n •*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
+            print("                            Revisar Solicitudes ")
+            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.• \n \n ")
             
             sub = input("1. Ver todas  |  2. Buscar por ID: ").strip()
             if sub == "1":
@@ -94,9 +94,9 @@ def apartado_de_ingreso():
 
         # ---------- 3. CREAR UNIDAD DE SANGRE ----------
         elif opcion == 3:
-            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
-            print("\n Nueva Unidad de Sangre \n")
-            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
+            print("\n •*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
+            print("Nueva Unidad de Sangre ")
+            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.• \n \n ")
             try:
                 nombre_donante = input("Nombre del donante: ").strip()
                 tipo_sangre = input("Tipo de sangre (ej. O+, A-): ").strip().upper()
@@ -125,9 +125,9 @@ def apartado_de_ingreso():
 
         # ---------- 4. VER UNIDADES ----------
         elif opcion == 4:
-            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
-            print("\n Unidades de Sangre \n")
-            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
+            print("\n •*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
+            print("                           Unidades de Sangre ")
+            print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.• \n \n ")
             try:
                 unidades = obtener_todas_las_unidades_sangre()
                 if not unidades:
@@ -146,12 +146,11 @@ def apartado_de_ingreso():
                 print(f"\n[ERROR]: {e}")
 
         # ---------- 5. EDITAR UNIDAD ----------
-        print("•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.••*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•*´¨`*•.¸¸.•")
         elif opcion == 5:
-            print("┏━━━━━━━━━━━•°•☆•°•━━━━━━━━━━━┓")
-            print("\n Editar Unidad de Sangre")
-            print("┗━━━━━━━━━━━•°•☆•°•━━━━━━━━━━━┛")
-            print("\n \n (Deja en blanco los campos que NO quieras cambiar)\n ")
+            print("\n \n ┏━━━━━━━━━━━•°•☆•°•━━━━━━━━━━━┓")
+            print("\Editar Unidad de Sangre")
+            print("┗━━━━━━━━━━━•°•☆•°•━━━━━━━━━━━┛\n \n ")
+            print("\n \n (Deja en blanco los campos que NO quieras cambiar)\n \n ")
             print("•┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈•⋆• ✧ •⋆• ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈•")            
 
             try:
@@ -182,7 +181,7 @@ def apartado_de_ingreso():
                 print(f"\n[ERROR DE BASE DE DATOS]: {e}")
         # ---------- 6. FINALIZAR PETICIÓN (NUEVA OPCIÓN) ----------
         elif opcion == 6:
-            print("\n ━━━━━━━━━ ☾ Finalizar Petición de Sangre ☽ ━━━━━━━━━ \n")
+            print("\n ━━━━━━━━━ ☾ Finalizar Petición de Sangre ☽ ━━━━━━━━━ \n \n ")
             try:
                 pid = int(input("ID de la petición a finalizar: ").strip())
                 actualizada = marcar_peticion_completa(pid)
@@ -195,10 +194,10 @@ def apartado_de_ingreso():
                 print(f"\n[ERROR DE BASE DE DATOS]: {e}")
 
         # ---------- 7. SALIR ----------
-        elif opcion == 6:
-            print("╔════════ ❀•°❀°•❀ ════════╗")
+        elif opcion == 7:
+            print("\n \n ╔════════ ❀•°❀°•❀ ════════╗")
             print("  Saliendo del sistema...")
-            print("╚════════ ❀•°❀°•❀ ════════╝")
+            print("╚════════ ❀•°❀°•❀ ════════╝ \n \n ")
             break
         else:
             print("Opción no válida, intenta de nuevo.")
