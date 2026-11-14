@@ -1,5 +1,5 @@
 from datetime import datetime
-from backend.solicitudd import (
+from solicitudd import (
     crear_peticion_sangre,
     obtener_todas_las_peticiones,
     obtener_peticion_por_id,
@@ -8,6 +8,8 @@ from backend.solicitudd import (
     obtener_todas_las_unidades_sangre,
     editar_unidad_sangre,
     marcar_peticion_completa, 
+    obtener_estado_peticion,
+    marcar_peticion_cancelada,
 )
 
 
@@ -219,13 +221,24 @@ def apartado_de_ingreso():
                 print(f"\n[ERROR DE BASE DE DATOS]: {e}")
         # ---------- 6. FINALIZAR PETICIÓN (NUEVA OPCIÓN) ----------
         elif opcion == 6:
-            print("\n ━━━━━━━━━ ☾ Finalizar Petición de Sangre ☽ ━━━━━━━━━ \n \n ")
+            print("\n ━━━━━━━━━ ☾ Finalizar Petición de Sangre ☽ ━━━━━━━━━ \n")
             try:
                 pid = int(input("ID de la petición a finalizar: ").strip())
-                actualizada = marcar_peticion_completa(pid)
-                print(f"\nPetición #{actualizada['id']} marcada como COMPLETADA.")
-                print(f"  Estado: {actualizada['estado']}")
-                print(f"  Fecha de completado: {actualizada['fecha_completada']}")
+                dec = int(input("Desea marcarla como:\n 1. Completada  2. Cancelada\nOpción: ").strip())
+
+                if dec == 1:
+                    actualizada = marcar_peticion_completa(pid)
+                    print(f"\nPetición #{actualizada['id']} marcada como COMPLETADA.")
+                    print(f"  Estado: {actualizada['estado']}")
+                    print(f"  Fecha de finalización: {actualizada['fecha_completada']}")
+                elif dec == 2:
+                    actualizada = marcar_peticion_cancelada(pid)
+                    print(f"\nPetición #{actualizada['id']} marcada como CANCELADA.")
+                    print(f"  Estado: {actualizada['estado']}")
+                    print(f"  Fecha de finalización: {actualizada['fecha_completada']}")
+                else:
+                    print("\n[ERROR]: Opción no válida. Debe ingresar 1 o 2.")
+
             except ValueError as ve:
                 print(f"\n[ERROR]: {ve}")
             except Exception as e:

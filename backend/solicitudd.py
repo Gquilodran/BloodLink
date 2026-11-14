@@ -156,6 +156,44 @@ def crear_peticion_sangre(
             conn.rollback()
             raise e
 
+        
+def actualizar_estado_peticion(id_peticion: int, nuevo_estado: str) -> dict:
+    """
+    Actualiza el estado de una petición existente ('pendiente', 'completada', 'cancelada').
+    Si el estado no es válido o el ID no existe, lanza ValueError y hace rollback.
+    """
+    estados_validos = ("pendiente", "completada", "cancelada")
+    nuevo_estado = nuevo_estado.strip().lower()
+
+    if nuevo_estado not in estados_validos:
+        raise ValueError(
+            f"Estado '{nuevo_estado}' no válido. Opciones permitidas: {estados_validos}."
+        )
+
+    with get_connection() as conn:
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    UPDATE peticion_sangre
+                    SET estado = %s
+                    WHERE id = %s
+                    RETURNING *;
+                    """,
+                    (nuevo_estado, id_peticion),
+                )
+                peticion_actualizada = cur.fetchone()
+
+                if not peticion_actualizada:
+                    raise ValueError(f"La petición con ID {id_peticion} no existe en la BD.")
+
+            conn.commit()
+            return dict(peticion_actualizada)
+
+        except Exception as e:
+            conn.rollback()
+            raise e
+
 # ==========================================
 # GETTERS: Para obtener los datos
 # ==========================================
@@ -186,6 +224,26 @@ def obtener_todas_las_peticiones():
             cur.execute(query)
             return [dict(row) for row in cur.fetchall()]
 
+
+#Se debe buscar por id la peticion solicitada
+def obtener_estado_peticion(id_peticion: int) -> dict | None:
+    """
+    Obtiene el estado actual de una petición de sangre por su ID.
+    Retorna None si la petición no existe.
+    """
+    query = """
+        SELECT id, estado
+        FROM peticion_sangre
+        WHERE id = %s;
+    """
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(query, (id_peticion,))
+            resultado = cur.fetchone()
+            return dict(resultado) if resultado else None
+
+
+        
 # ==========================================
 # UNIDADES DE SANGRE: listar y editar
 # (registrar_unidad_sangre ya existe arriba)
@@ -287,6 +345,33 @@ def marcar_peticion_completa(id_peticion: int) -> dict:
             conn.rollback()
             raise
 
+
+def marcar_peticion_cancelada(id_peticion: int) -> dict:
+    """
+    Marca una petición como 'cancelada' y registra la fecha y hora.
+    Devuelve la fila actualizada o lanza un ValueError si el ID no existe.
+    """
+    with get_connection() as conn:
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    UPDATE peticion_sangre
+                    SET estado = 'cancelada', fecha_completada = NOW()
+                    WHERE id = %s
+                    RETURNING *;
+                    """,
+                    (id_peticion,),
+                )
+                fila = cur.fetchone()
+                if not fila:
+                    raise ValueError(f"No existe la petición con ID {id_peticion}.")
+                resultado = dict(fila)
+            conn.commit()
+            return resultado
+        except Exception:
+            conn.rollback()
+            raise
 
 def obtener_unidad_sangre_por_id(unidad_id: int):
     """Obtiene una unidad de sangre específica por su ID (con nombre de tipo, donante y ubicación)."""
