@@ -1,5 +1,6 @@
+
 import 'package:flutter/material.dart';
-import 'screens/upload_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const BloodLinkApp());
@@ -12,12 +13,15 @@ class BloodLinkApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'BloodLink',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.redAccent),
-        useMaterial3: true,
-      ),
-      home: const UploadScreen(),
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: Colors.white,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFB71C1C),
+        ),
+      ),
+      home: const HomeScreen(),
     );
   }
 }
