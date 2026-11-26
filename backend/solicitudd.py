@@ -1,9 +1,11 @@
 import os
-from datetime import datetime, timedelta
+from pathlib import Path
+from datetime import datetime, date, timedelta
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
+load_dotenv(Path(__file__).resolve().parent / ".env")
 load_dotenv()
 
 # Lee la variable DATABASE_URL desde tu archivo .env o el link directamente por si el .env no funciona
@@ -34,10 +36,19 @@ def registrar_unidad_sangre(
     nombre_ubicacion: str,
     fecha_extraccion: datetime = None,
     dias_vigencia: int = 42,
+    fecha_caducidad: date = None,
+    crear_ubicacion_si_no_existe: bool = False,
 ) -> dict:
     if fecha_extraccion is None:
         fecha_extraccion = datetime.now()
-    fecha_caducidad = (fecha_extraccion + timedelta(days=dias_vigencia)).date()
+    if fecha_caducidad is None:
+        fecha_caducidad = (fecha_extraccion + timedelta(days=dias_vigencia)).date()
+    elif isinstance(fecha_caducidad, datetime):
+        fecha_caducidad = fecha_caducidad.date()
+
+    tipo_sangre = tipo_sangre.strip().upper()
+    nombre_donante = nombre_donante.strip()
+    nombre_ubicacion = nombre_ubicacion.strip()
 
     with get_connection() as conn:
         try:
@@ -58,9 +69,16 @@ def registrar_unidad_sangre(
                     (nombre_ubicacion,),
                 )
                 fila_ubicacion = cur.fetchone()
-                if not fila_ubicacion:
+                if fila_ubicacion:
+                    ubicacion_id = fila_ubicacion[0]
+                elif crear_ubicacion_si_no_existe:
+                    cur.execute(
+                        "INSERT INTO ubicacion (nombre_ubicacion) VALUES (%s) RETURNING id;",
+                        (nombre_ubicacion,),
+                    )
+                    ubicacion_id = cur.fetchone()[0]
+                else:
                     raise ValueError(f"La ubicación '{nombre_ubicacion}' no existe en la BD.")
-                ubicacion_id = fila_ubicacion[0]
 
                 # Buscar si el donante ya existe; si no, crearlo dejando que SERIAL asigne su ID
                 cur.execute(
@@ -267,35 +285,54 @@ def obtener_todas_las_unidades_sangre():
 
 def editar_unidad_sangre(unidad_id, tipo_sangre=None, nombre_donante=None,
                          nombre_ubicacion=None, fecha_extraccion=None,
-                         fecha_caducidad=None):
+                         fecha_caducidad=None, crear_si_no_existe=False):
     campos, valores = [], []
     with get_connection() as conn:
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute("SELECT id FROM unidad_sangre WHERE id = %s;", (unidad_id,))
-                if not cur.fetchone():
+                cur.execute("SELECT id, tipo_sangre_id FROM unidad_sangre WHERE id = %s;", (unidad_id,))
+                unidad_actual = cur.fetchone()
+                if not unidad_actual:
                     raise ValueError(f"No existe la unidad con ID {unidad_id}.")
+                tipo_id_actual = unidad_actual["tipo_sangre_id"]
 
                 if tipo_sangre is not None:
                     cur.execute("SELECT id FROM tipo_sangre WHERE tipo = %s;", (tipo_sangre,))
                     r = cur.fetchone()
                     if not r:
                         raise ValueError(f"El tipo de sangre '{tipo_sangre}' no existe.")
-                    campos.append("tipo_sangre_id = %s"); valores.append(r["id"])
+                    tipo_id_actual = r["id"]
+                    campos.append("tipo_sangre_id = %s"); valores.append(tipo_id_actual)
 
                 if nombre_donante is not None:
                     cur.execute("SELECT id FROM donante WHERE nombre_donante = %s;", (nombre_donante,))
                     r = cur.fetchone()
-                    if not r:
+                    if r:
+                        donante_id = r["id"]
+                    elif crear_si_no_existe:
+                        cur.execute(
+                            "INSERT INTO donante (nombre_donante, tipo_sangre_id) VALUES (%s, %s) RETURNING id;",
+                            (nombre_donante, tipo_id_actual),
+                        )
+                        donante_id = cur.fetchone()["id"]
+                    else:
                         raise ValueError(f"El donante '{nombre_donante}' no existe. Regístralo primero.")
-                    campos.append("donante_id = %s"); valores.append(r["id"])
+                    campos.append("donante_id = %s"); valores.append(donante_id)
 
                 if nombre_ubicacion is not None:
                     cur.execute("SELECT id FROM ubicacion WHERE nombre_ubicacion = %s;", (nombre_ubicacion,))
                     r = cur.fetchone()
-                    if not r:
+                    if r:
+                        ubicacion_id = r["id"]
+                    elif crear_si_no_existe:
+                        cur.execute(
+                            "INSERT INTO ubicacion (nombre_ubicacion) VALUES (%s) RETURNING id;",
+                            (nombre_ubicacion,),
+                        )
+                        ubicacion_id = cur.fetchone()["id"]
+                    else:
                         raise ValueError(f"La ubicación '{nombre_ubicacion}' no existe.")
-                    campos.append("ubicacion_id = %s"); valores.append(r["id"])
+                    campos.append("ubicacion_id = %s"); valores.append(ubicacion_id)
 
                 if fecha_extraccion is not None:
                     campos.append("fecha_hora_extraccion = %s"); valores.append(fecha_extraccion)
@@ -389,6 +426,40 @@ def obtener_unidad_sangre_por_id(unidad_id: int):
             cur.execute(query, (unidad_id,))
             fila = cur.fetchone()
             return dict(fila) if fila else None
+
+
+def eliminar_unidad_sangre(unidad_id: int) -> dict:
+    """Elimina (retira del inventario) una unidad de sangre por su ID."""
+    with get_connection() as conn:
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    "DELETE FROM unidad_sangre WHERE id = %s RETURNING *;",
+                    (unidad_id,),
+                )
+                fila = cur.fetchone()
+                if not fila:
+                    raise ValueError(f"No existe la unidad con ID {unidad_id}.")
+                resultado = dict(fila)
+            conn.commit()
+            return resultado
+        except Exception:
+            conn.rollback()
+            raise
+
+
+def obtener_todas_las_ubicaciones() -> list[dict]:
+    """Retorna la lista de ubicaciones únicas ordenadas alfabéticamente."""
+    query = """
+        SELECT MIN(id) AS id, nombre_ubicacion
+        FROM ubicacion
+        GROUP BY nombre_ubicacion
+        ORDER BY nombre_ubicacion ASC;
+    """
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(query)
+            return [dict(r) for r in cur.fetchall()]
 # ejemplo de prueba
 #
 #if __name__ == "__main__":

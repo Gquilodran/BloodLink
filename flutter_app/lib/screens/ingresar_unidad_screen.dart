@@ -1,17 +1,16 @@
-
 import 'package:flutter/material.dart';
+import '../services/blood_bank_service.dart';
 
 class IngresarUnidadScreen extends StatefulWidget {
   const IngresarUnidadScreen({super.key});
 
   @override
-  State<IngresarUnidadScreen> createState() =>
-      _IngresarUnidadScreenState();
+  State<IngresarUnidadScreen> createState() => _IngresarUnidadScreenState();
 }
 
-class _IngresarUnidadScreenState
-    extends State<IngresarUnidadScreen> {
+class _IngresarUnidadScreenState extends State<IngresarUnidadScreen> {
   final _formKey = GlobalKey<FormState>();
+  final BloodBankService _service = BloodBankService();
 
   final _donanteController = TextEditingController();
   final _ubicacionController = TextEditingController();
@@ -19,11 +18,27 @@ class _IngresarUnidadScreenState
   final _caducidadController = TextEditingController();
 
   String? _tipoSangre;
+  bool _guardando = false;
+  List<String> _ubicacionesDisponibles = [];
 
   final tiposSangre = [
     'A+', 'A-', 'B+', 'B-',
     'AB+', 'AB-', 'O+', 'O-',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarUbicaciones();
+  }
+
+  Future<void> _cargarUbicaciones() async {
+    final lista = await _service.obtenerUbicaciones();
+    if (!mounted) return;
+    setState(() {
+      _ubicacionesDisponibles = lista;
+    });
+  }
 
   @override
   void dispose() {
@@ -71,6 +86,7 @@ class _IngresarUnidadScreenState
     TextEditingController controller, {
     bool fecha = false,
     bool incluirHora = false,
+    Widget? suffixIcon,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
@@ -80,9 +96,8 @@ class _IngresarUnidadScreenState
         decoration: InputDecoration(
           labelText: titulo,
           border: const OutlineInputBorder(),
-          suffixIcon: fecha
-              ? const Icon(Icons.calendar_today_outlined)
-              : null,
+          suffixIcon: suffixIcon ??
+              (fecha ? const Icon(Icons.calendar_today_outlined) : null),
         ),
         onTap: fecha
             ? () => _seleccionarFecha(
@@ -100,13 +115,20 @@ class _IngresarUnidadScreenState
     );
   }
 
-  void _registrar() {
+  void _limpiar() {
+    _formKey.currentState?.reset();
+    _donanteController.clear();
+    _ubicacionController.clear();
+    _extraccionController.clear();
+    _caducidadController.clear();
+    setState(() => _tipoSangre = null);
+  }
+
+  Future<void> _registrar() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final extraccion =
-        DateTime.tryParse(_extraccionController.text);
-    final caducidad =
-        DateTime.tryParse(_caducidadController.text);
+    final extraccion = DateTime.tryParse(_extraccionController.text);
+    final caducidad = DateTime.tryParse(_caducidadController.text);
 
     if (extraccion == null || caducidad == null) return;
 
@@ -123,14 +145,41 @@ class _IngresarUnidadScreenState
       return;
     }
 
-    // Pendiente: conectar el formulario con el backend.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Formulario validado. Registro pendiente de conexión.',
+    setState(() => _guardando = true);
+
+    try {
+      final creada = await _service.registrarUnidad(
+        nombreDonante: _donanteController.text,
+        tipoSangre: _tipoSangre!,
+        nombreUbicacion: _ubicacionController.text,
+        fechaExtraccion: _extraccionController.text,
+        fechaCaducidad: _caducidadController.text,
+      );
+
+      if (!mounted) return;
+      _limpiar();
+      _cargarUbicaciones();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unidad #${creada.id} (${creada.tipoSangre}) registrada exitosamente.',
+          ),
+          backgroundColor: Colors.green.shade700,
         ),
-      ),
-    );
+      );
+    } on BloodBankException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _guardando = false);
+      }
+    }
   }
 
   @override
@@ -151,13 +200,11 @@ class _IngresarUnidadScreenState
             ),
             const SizedBox(height: 8),
             const Text(
-              'Complete los datos de la nueva unidad.',
+              'Complete los datos de la nueva unidad para almacenarla en PostgreSQL.',
               style: TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 25),
-
             _campo('Nombre del donante', _donanteController),
-
             Padding(
               padding: const EdgeInsets.only(bottom: 18),
               child: DropdownButtonFormField<String>(
@@ -179,30 +226,54 @@ class _IngresarUnidadScreenState
                     valor == null ? 'Seleccione un tipo' : null,
               ),
             ),
-
-            _campo('Ubicación', _ubicacionController),
-
+            _campo(
+              'Ubicación',
+              _ubicacionController,
+              suffixIcon: _ubicacionesDisponibles.isEmpty
+                  ? null
+                  : PopupMenuButton<String>(
+                      tooltip: 'Elegir ubicación existente',
+                      icon: const Icon(Icons.arrow_drop_down),
+                      onSelected: (valor) {
+                        _ubicacionController.text = valor;
+                      },
+                      itemBuilder: (context) => _ubicacionesDisponibles
+                          .map(
+                            (u) => PopupMenuItem<String>(
+                              value: u,
+                              child: Text(u),
+                            ),
+                          )
+                          .toList(),
+                    ),
+            ),
             _campo(
               'Fecha y hora de extracción',
               _extraccionController,
               fecha: true,
               incluirHora: true,
             ),
-
             _campo(
               'Fecha de caducidad',
               _caducidadController,
               fecha: true,
             ),
-
             const SizedBox(height: 10),
-
             Row(
               children: [
                 ElevatedButton.icon(
-                  onPressed: _registrar,
-                  icon: const Icon(Icons.save_outlined),
-                  label: const Text('Registrar unidad'),
+                  onPressed: _guardando ? null : _registrar,
+                  icon: _guardando
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(_guardando ? 'Registrando...' : 'Registrar unidad'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFB71C1C),
                     foregroundColor: Colors.white,
@@ -214,14 +285,7 @@ class _IngresarUnidadScreenState
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton(
-                  onPressed: () {
-                    _formKey.currentState?.reset();
-                    _donanteController.clear();
-                    _ubicacionController.clear();
-                    _extraccionController.clear();
-                    _caducidadController.clear();
-                    setState(() => _tipoSangre = null);
-                  },
+                  onPressed: _guardando ? null : _limpiar,
                   child: const Text('Limpiar'),
                 ),
               ],
