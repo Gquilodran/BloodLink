@@ -4,6 +4,7 @@ import '../widgets/sidebar.dart';
 import 'inventario_screen.dart';
 import 'ingresar_unidad_screen.dart';
 import 'solicitudes_screen.dart';
+import 'planning_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'Inventario de sangre',
     'Ingresar unidad de sangre',
     'Solicitudes de sangre',
+    'Planning semanal',
   ];
 
   void navegar(int index) {
@@ -85,6 +87,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (selectedIndex == 3) {
       return const SolicitudesScreen();
+    }
+
+    if (selectedIndex == 4) {
+      return const PlanningScreen();
     }
 
     return Column(
