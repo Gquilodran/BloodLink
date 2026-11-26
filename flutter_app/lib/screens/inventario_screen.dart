@@ -102,6 +102,8 @@ class _InventarioScreenState extends State<InventarioScreen> {
     final donanteCtrl = TextEditingController(text: unidad.donante);
     final ubicacionCtrl = TextEditingController(text: unidad.ubicacion);
     final caducidadCtrl = TextEditingController(text: unidad.fechaCaducidad);
+    final cantidadCtrl =
+        TextEditingController(text: unidad.cantidadMl.toString());
     String tipoSeleccionado = unidad.tipoSangre;
     final formKey = GlobalKey<FormState>();
 
@@ -134,6 +136,25 @@ class _InventarioScreenState extends State<InventarioScreen> {
                           if (valor != null) {
                             setDialogState(() => tipoSeleccionado = valor);
                           }
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: cantidadCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Volumen (ml)',
+                          suffixText: 'ml',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (v) {
+                          final texto = v?.trim() ?? '';
+                          if (texto.isEmpty) return 'Campo obligatorio';
+                          final ml = int.tryParse(texto);
+                          if (ml == null || ml <= 0 || ml > 500) {
+                            return 'Ingrese un entero entre 1 y 500';
+                          }
+                          return null;
                         },
                       ),
                       const SizedBox(height: 14),
@@ -206,6 +227,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
           nombreDonante: donanteCtrl.text,
           nombreUbicacion: ubicacionCtrl.text,
           fechaCaducidad: caducidadCtrl.text,
+          cantidadMl: int.parse(cantidadCtrl.text.trim()),
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -229,6 +251,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
     donanteCtrl.dispose();
     ubicacionCtrl.dispose();
     caducidadCtrl.dispose();
+    cantidadCtrl.dispose();
   }
 
   @override
@@ -334,6 +357,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                   columns: const [
                     DataColumn(label: Text('ID')),
                     DataColumn(label: Text('Tipo')),
+                    DataColumn(label: Text('Volumen')),
                     DataColumn(label: Text('Donante')),
                     DataColumn(label: Text('Ubicación')),
                     DataColumn(label: Text('Extracción')),
@@ -350,6 +374,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
+                        DataCell(Text('${unidad.cantidadMl} ml')),
                         DataCell(Text(unidad.donante)),
                         DataCell(Text(unidad.ubicacion)),
                         DataCell(Text(unidad.fechaExtraccion)),

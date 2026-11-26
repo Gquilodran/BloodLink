@@ -22,6 +22,7 @@ class UnidadCreateRequest(BaseModel):
     fecha_hora_extraccion: Optional[datetime] = None
     fecha_caducidad: Optional[date] = None
     dias_vigencia: int = Field(default=42, ge=1, le=365)
+    cantidad_ml: int = Field(default=200, ge=1, le=500)
 
 
 class UnidadUpdateRequest(BaseModel):
@@ -30,6 +31,7 @@ class UnidadUpdateRequest(BaseModel):
     nombre_ubicacion: Optional[str] = Field(default=None, min_length=1, max_length=100)
     fecha_hora_extraccion: Optional[datetime] = None
     fecha_caducidad: Optional[date] = None
+    cantidad_ml: Optional[int] = Field(default=None, ge=1, le=500)
 
 
 @router.get("/unidades", summary="Listar unidades de sangre")
@@ -74,6 +76,7 @@ def crear_unidad(payload: UnidadCreateRequest):
             dias_vigencia=payload.dias_vigencia,
             fecha_caducidad=payload.fecha_caducidad,
             crear_ubicacion_si_no_existe=True,
+            cantidad_ml=payload.cantidad_ml,
         )
         return obtener_unidad_sangre_por_id(creada["id"]) or creada
     except ValueError as e:
@@ -96,6 +99,7 @@ def actualizar_unidad(unidad_id: int, payload: UnidadUpdateRequest):
             fecha_extraccion=payload.fecha_hora_extraccion,
             fecha_caducidad=payload.fecha_caducidad,
             crear_si_no_existe=True,
+            cantidad_ml=payload.cantidad_ml,
         )
         return obtener_unidad_sangre_por_id(unidad_id)
     except ValueError as e:

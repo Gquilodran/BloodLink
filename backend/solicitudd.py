@@ -38,7 +38,10 @@ def registrar_unidad_sangre(
     dias_vigencia: int = 42,
     fecha_caducidad: date = None,
     crear_ubicacion_si_no_existe: bool = False,
+    cantidad_ml: int = 200,
 ) -> dict:
+    if not isinstance(cantidad_ml, int) or isinstance(cantidad_ml, bool) or not (1 <= cantidad_ml <= 500):
+        raise ValueError("La cantidad en ml debe ser un número entero entre 1 y 500.")
     if fecha_extraccion is None:
         fecha_extraccion = datetime.now()
     if fecha_caducidad is None:
@@ -104,8 +107,8 @@ def registrar_unidad_sangre(
                 cur.execute(
                     """
                     INSERT INTO unidad_sangre (
-                        tipo_sangre_id, donante_id, ubicacion_id, fecha_hora_extraccion, fecha_caducidad
-                    ) VALUES (%s, %s, %s, %s, %s)
+                        tipo_sangre_id, donante_id, ubicacion_id, fecha_hora_extraccion, fecha_caducidad, cantidad_ml
+                    ) VALUES (%s, %s, %s, %s, %s, %s)
                     RETURNING id;
                     """,
                     (
@@ -114,6 +117,7 @@ def registrar_unidad_sangre(
                         ubicacion_id,
                         fecha_extraccion,
                         fecha_caducidad,
+                        cantidad_ml,
                     ),
                 )
                 nueva_unidad_id = cur.fetchone()[0]
@@ -126,6 +130,7 @@ def registrar_unidad_sangre(
                 "ubicacion_id": ubicacion_id,
                 "fecha_hora_extraccion": fecha_extraccion,
                 "fecha_caducidad": fecha_caducidad,
+                "cantidad_ml": cantidad_ml,
             }
 
         except Exception as e:
@@ -269,7 +274,9 @@ def obtener_estado_peticion(id_peticion: int) -> dict | None:
 
 def obtener_todas_las_unidades_sangre():
     query = """
-        SELECT u.*, ts.tipo AS nombre_tipo_sangre,
+        SELECT u.id, u.tipo_sangre_id, u.donante_id, u.ubicacion_id,
+               u.fecha_hora_extraccion, u.fecha_caducidad, u.cantidad_ml,
+               ts.tipo AS nombre_tipo_sangre,
                d.nombre_donante, ub.nombre_ubicacion
         FROM unidad_sangre u
         JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id
@@ -285,7 +292,8 @@ def obtener_todas_las_unidades_sangre():
 
 def editar_unidad_sangre(unidad_id, tipo_sangre=None, nombre_donante=None,
                          nombre_ubicacion=None, fecha_extraccion=None,
-                         fecha_caducidad=None, crear_si_no_existe=False):
+                         fecha_caducidad=None, crear_si_no_existe=False,
+                         cantidad_ml=None):
     campos, valores = [], []
     with get_connection() as conn:
         try:
@@ -339,6 +347,11 @@ def editar_unidad_sangre(unidad_id, tipo_sangre=None, nombre_donante=None,
 
                 if fecha_caducidad is not None:
                     campos.append("fecha_caducidad = %s"); valores.append(fecha_caducidad)
+
+                if cantidad_ml is not None:
+                    if not isinstance(cantidad_ml, int) or isinstance(cantidad_ml, bool) or not (1 <= cantidad_ml <= 500):
+                        raise ValueError("La cantidad en ml debe ser un número entero entre 1 y 500.")
+                    campos.append("cantidad_ml = %s"); valores.append(cantidad_ml)
 
                 if not campos:
                     raise ValueError("Debes indicar al menos un campo a editar.")
@@ -413,7 +426,9 @@ def marcar_peticion_cancelada(id_peticion: int) -> dict:
 def obtener_unidad_sangre_por_id(unidad_id: int):
     """Obtiene una unidad de sangre específica por su ID (con nombre de tipo, donante y ubicación)."""
     query = """
-        SELECT u.*, ts.tipo AS nombre_tipo_sangre,
+        SELECT u.id, u.tipo_sangre_id, u.donante_id, u.ubicacion_id,
+               u.fecha_hora_extraccion, u.fecha_caducidad, u.cantidad_ml,
+               ts.tipo AS nombre_tipo_sangre,
                d.nombre_donante, ub.nombre_ubicacion
         FROM unidad_sangre u
         JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id

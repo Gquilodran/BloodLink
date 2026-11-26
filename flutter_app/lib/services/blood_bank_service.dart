@@ -18,6 +18,7 @@ class UnidadSangre {
   final String ubicacion;
   final String fechaExtraccion;
   final String fechaCaducidad;
+  final int cantidadMl;
 
   UnidadSangre({
     required this.id,
@@ -26,6 +27,7 @@ class UnidadSangre {
     required this.ubicacion,
     required this.fechaExtraccion,
     required this.fechaCaducidad,
+    required this.cantidadMl,
   });
 
   factory UnidadSangre.fromJson(Map<String, dynamic> json) {
@@ -36,6 +38,7 @@ class UnidadSangre {
       ubicacion: (json['nombre_ubicacion'] ?? 'Sin ubicación').toString(),
       fechaExtraccion: _formatearFechaHora(json['fecha_hora_extraccion']),
       fechaCaducidad: _formatearFecha(json['fecha_caducidad']),
+      cantidadMl: (json['cantidad_ml'] as num?)?.toInt() ?? 200,
     );
   }
 }
@@ -153,6 +156,7 @@ class BloodBankService {
     required String nombreUbicacion,
     required String fechaExtraccion,
     required String fechaCaducidad,
+    int cantidadMl = 200,
   }) async {
     final uri = Uri.parse('$_baseUrl/unidades');
     final extraccionIso = fechaExtraccion.trim().replaceFirst(' ', 'T');
@@ -168,6 +172,7 @@ class BloodBankService {
               'nombre_ubicacion': nombreUbicacion.trim(),
               'fecha_hora_extraccion': extraccionIso,
               'fecha_caducidad': fechaCaducidad.trim(),
+              'cantidad_ml': cantidadMl,
             }),
           )
           .timeout(_timeout);
@@ -185,6 +190,7 @@ class BloodBankService {
     String? nombreUbicacion,
     String? fechaExtraccion,
     String? fechaCaducidad,
+    int? cantidadMl,
   }) async {
     final uri = Uri.parse('$_baseUrl/unidades/$id');
     final body = <String, dynamic>{};
@@ -202,6 +208,9 @@ class BloodBankService {
     }
     if (fechaCaducidad != null && fechaCaducidad.trim().isNotEmpty) {
       body['fecha_caducidad'] = fechaCaducidad.trim();
+    }
+    if (cantidadMl != null) {
+      body['cantidad_ml'] = cantidadMl;
     }
 
     try {

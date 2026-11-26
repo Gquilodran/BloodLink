@@ -16,10 +16,15 @@ class _IngresarUnidadScreenState extends State<IngresarUnidadScreen> {
   final _ubicacionController = TextEditingController();
   final _extraccionController = TextEditingController();
   final _caducidadController = TextEditingController();
+  final _otroVolumenController = TextEditingController();
 
   String? _tipoSangre;
+  int _volumenSeleccionado = 450;
+  bool _usarOtroVolumen = false;
   bool _guardando = false;
   List<String> _ubicacionesDisponibles = [];
+
+  static const List<int> _volumenesEstandar = [200, 350, 450, 500];
 
   final tiposSangre = [
     'A+', 'A-', 'B+', 'B-',
@@ -46,6 +51,7 @@ class _IngresarUnidadScreenState extends State<IngresarUnidadScreen> {
     _ubicacionController.dispose();
     _extraccionController.dispose();
     _caducidadController.dispose();
+    _otroVolumenController.dispose();
     super.dispose();
   }
 
@@ -121,7 +127,12 @@ class _IngresarUnidadScreenState extends State<IngresarUnidadScreen> {
     _ubicacionController.clear();
     _extraccionController.clear();
     _caducidadController.clear();
-    setState(() => _tipoSangre = null);
+    _otroVolumenController.clear();
+    setState(() {
+      _tipoSangre = null;
+      _volumenSeleccionado = 450;
+      _usarOtroVolumen = false;
+    });
   }
 
   Future<void> _registrar() async {
@@ -145,6 +156,10 @@ class _IngresarUnidadScreenState extends State<IngresarUnidadScreen> {
       return;
     }
 
+    final cantidadMl = _usarOtroVolumen
+        ? int.parse(_otroVolumenController.text.trim())
+        : _volumenSeleccionado;
+
     setState(() => _guardando = true);
 
     try {
@@ -154,6 +169,7 @@ class _IngresarUnidadScreenState extends State<IngresarUnidadScreen> {
         nombreUbicacion: _ubicacionController.text,
         fechaExtraccion: _extraccionController.text,
         fechaCaducidad: _caducidadController.text,
+        cantidadMl: cantidadMl,
       );
 
       if (!mounted) return;
@@ -162,7 +178,7 @@ class _IngresarUnidadScreenState extends State<IngresarUnidadScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Unidad #${creada.id} (${creada.tipoSangre}) registrada exitosamente.',
+            'Unidad #${creada.id} (${creada.tipoSangre}, ${creada.cantidadMl} ml) registrada exitosamente.',
           ),
           backgroundColor: Colors.green.shade700,
         ),
@@ -180,6 +196,105 @@ class _IngresarUnidadScreenState extends State<IngresarUnidadScreen> {
         setState(() => _guardando = false);
       }
     }
+  }
+
+  Widget _selectorVolumen() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Volumen extraído (ml)',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              ..._volumenesEstandar.map((ml) {
+                final seleccionado =
+                    !_usarOtroVolumen && _volumenSeleccionado == ml;
+                return ChoiceChip(
+                  label: Text('$ml ml'),
+                  selected: seleccionado,
+                  selectedColor: const Color(0xFFFEE2E2),
+                  checkmarkColor: const Color(0xFFB71C1C),
+                  labelStyle: TextStyle(
+                    color: seleccionado
+                        ? const Color(0xFFB71C1C)
+                        : Colors.black87,
+                    fontWeight:
+                        seleccionado ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  onSelected: (_) {
+                    setState(() {
+                      _usarOtroVolumen = false;
+                      _volumenSeleccionado = ml;
+                      _otroVolumenController.clear();
+                    });
+                  },
+                );
+              }),
+              ChoiceChip(
+                label: const Text('Otro'),
+                selected: _usarOtroVolumen,
+                selectedColor: const Color(0xFFFEE2E2),
+                checkmarkColor: const Color(0xFFB71C1C),
+                labelStyle: TextStyle(
+                  color: _usarOtroVolumen
+                      ? const Color(0xFFB71C1C)
+                      : Colors.black87,
+                  fontWeight:
+                      _usarOtroVolumen ? FontWeight.w600 : FontWeight.normal,
+                ),
+                onSelected: (_) {
+                  setState(() {
+                    _usarOtroVolumen = true;
+                  });
+                },
+              ),
+            ],
+          ),
+          if (_usarOtroVolumen) ...[
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _otroVolumenController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Cantidad manual (ml)',
+                hintText: 'Ingrese un valor entre 1 y 500',
+                suffixText: 'ml',
+                border: OutlineInputBorder(),
+              ),
+              validator: (valor) {
+                if (!_usarOtroVolumen) return null;
+                final texto = valor?.trim() ?? '';
+                if (texto.isEmpty) {
+                  return 'Ingrese la cantidad en ml';
+                }
+                final cantidad = int.tryParse(texto);
+                if (cantidad == null) {
+                  return 'Ingrese un número entero válido';
+                }
+                if (cantidad <= 0) {
+                  return 'La cantidad debe ser mayor a 0 ml';
+                }
+                if (cantidad > 500) {
+                  return 'El volumen máximo permitido es 500 ml';
+                }
+                return null;
+              },
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -226,6 +341,7 @@ class _IngresarUnidadScreenState extends State<IngresarUnidadScreen> {
                     valor == null ? 'Seleccione un tipo' : null,
               ),
             ),
+            _selectorVolumen(),
             _campo(
               'Ubicación',
               _ubicacionController,
