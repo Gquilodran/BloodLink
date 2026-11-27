@@ -1,7 +1,9 @@
 from datetime import datetime, date, timezone
+from typing import Optional, Literal
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from db import Base
 
 
@@ -22,6 +24,50 @@ class Ubicacion(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     nombre_ubicacion = Column(String(100), nullable=False)
+
+
+class Cita(Base):
+    __tablename__ = "cita"
+
+    id_cita = Column(Integer, primary_key=True, index=True)
+    id_donante = Column(Integer, ForeignKey("donante.id", ondelete="CASCADE"), nullable=False)
+    id_personal = Column(Integer, ForeignKey("personal_salud.id", ondelete="SET NULL"), nullable=True)
+    fecha_hora = Column(DateTime, nullable=False)
+    estado = Column(String(20), nullable=False, default="pendiente")
+    observaciones = Column(Text, nullable=True)
+    fecha_creacion = Column(DateTime, server_default=func.now())
+
+    donante = relationship("Donante", back_populates="citas")
+
+
+# --- Esquemas Pydantic ---
+
+class CitaCreate(BaseModel):
+    id_donante: int
+    id_personal: Optional[int] = None
+    fecha_hora: datetime
+    observaciones: Optional[str] = None
+
+
+class CitaUpdate(BaseModel):
+    fecha_hora: Optional[datetime] = None
+    id_personal: Optional[int] = None
+    estado: Optional[str] = None  # "pendiente", "completada", "cancelada"
+    observaciones: Optional[str] = None
+
+
+EstadoCita = Literal["pendiente", "completada", "cancelada"]
+
+
+class CitaResponse(BaseModel):
+    id_cita: int
+    id_donante: int
+    id_personal: Optional[int] = None
+    fecha_hora: datetime
+    estado: EstadoCita
+    observaciones: Optional[str] = None
+    fecha_creacion: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CargoPersonal(Base):
@@ -51,6 +97,7 @@ class Donante(Base):
     tipo_sangre_id = Column(Integer, ForeignKey("tipo_sangre.id"), nullable=True)
 
     tipo_sangre = relationship("TipoSangre", back_populates="donantes")
+    citas = relationship("Cita", back_populates="donante")
 
     def to_string(self) -> str:
         tipo = self.tipo_sangre.tipo if self.tipo_sangre else "Desconocido"
