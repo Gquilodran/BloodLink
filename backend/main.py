@@ -1,7 +1,9 @@
 import sys
 from pathlib import Path
 from contextlib import asynccontextmanager
+from routes import citas
 
+app.include_router(citas.router)
 # Ensure backend directory is in python path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
