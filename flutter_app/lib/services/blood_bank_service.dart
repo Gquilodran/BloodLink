@@ -11,6 +11,29 @@ class BloodBankException implements Exception {
   String toString() => message;
 }
 
+class AlertasVencimiento {
+  final int vencenHoy;
+  final int porVencer;
+  final int vencidas;
+  final int vigentes;
+
+  AlertasVencimiento({
+    required this.vencenHoy,
+    required this.porVencer,
+    required this.vencidas,
+    required this.vigentes,
+  });
+
+  factory AlertasVencimiento.fromJson(Map<String, dynamic> json) {
+    return AlertasVencimiento(
+      vencenHoy: (json['vencen_hoy'] as num?)?.toInt() ?? 0,
+      porVencer: (json['por_vencer'] as num?)?.toInt() ?? 0,
+      vencidas: (json['vencidas'] as num?)?.toInt() ?? 0,
+      vigentes: (json['vigentes'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 class UnidadSangre {
   final int id;
   final String tipoSangre;
@@ -19,6 +42,9 @@ class UnidadSangre {
   final String fechaExtraccion;
   final String fechaCaducidad;
   final int cantidadMl;
+  final bool estaVencida;
+  final bool venceHoy;
+  final int? diasRestantes;
 
   UnidadSangre({
     required this.id,
@@ -28,17 +54,37 @@ class UnidadSangre {
     required this.fechaExtraccion,
     required this.fechaCaducidad,
     required this.cantidadMl,
+    required this.estaVencida,
+    required this.venceHoy,
+    this.diasRestantes,
   });
 
   factory UnidadSangre.fromJson(Map<String, dynamic> json) {
+    final caducidad = _formatearFecha(json['fecha_caducidad']);
+    final now = DateTime.now();
+    final hoy = DateTime(now.year, now.month, now.day);
+    final fechaParsed = DateTime.tryParse(caducidad);
+
+    final bool vencidaFallback =
+        fechaParsed != null ? fechaParsed.isBefore(hoy) : false;
+    final bool hoyFallback = fechaParsed != null
+        ? fechaParsed.year == hoy.year &&
+            fechaParsed.month == hoy.month &&
+            fechaParsed.day == hoy.day
+        : false;
+    final int? diasFallback = fechaParsed?.difference(hoy).inDays;
+
     return UnidadSangre(
       id: (json['id'] as num).toInt(),
       tipoSangre: (json['nombre_tipo_sangre'] ?? '').toString(),
       donante: (json['nombre_donante'] ?? 'Sin registrar').toString(),
       ubicacion: (json['nombre_ubicacion'] ?? 'Sin ubicación').toString(),
       fechaExtraccion: _formatearFechaHora(json['fecha_hora_extraccion']),
-      fechaCaducidad: _formatearFecha(json['fecha_caducidad']),
+      fechaCaducidad: caducidad,
       cantidadMl: (json['cantidad_ml'] as num?)?.toInt() ?? 200,
+      estaVencida: (json['esta_vencida'] as bool?) ?? vencidaFallback,
+      venceHoy: (json['vence_hoy'] as bool?) ?? hoyFallback,
+      diasRestantes: (json['dias_restantes'] as num?)?.toInt() ?? diasFallback,
     );
   }
 }
@@ -133,11 +179,31 @@ class BloodBankService {
         'Verifica que el backend esté iniciado.';
   }
 
-  Future<List<UnidadSangre>> obtenerUnidades({String? tipoSangre}) async {
-    final query = (tipoSangre != null && tipoSangre != 'Todos')
-        ? '?tipo_sangre=${Uri.encodeQueryComponent(tipoSangre)}'
-        : '';
-    final uri = Uri.parse('$_baseUrl/unidades$query');
+  Future<AlertasVencimiento> obtenerAlertasVencimiento() async {
+    final uri = Uri.parse('$_baseUrl/unidades/alertas-vencimiento');
+    try {
+      final response = await _client.get(uri, headers: _jsonHeaders).timeout(_timeout);
+      final data = _decodificarRespuesta(response) as Map<String, dynamic>;
+      return AlertasVencimiento.fromJson(data);
+    } catch (e) {
+      throw BloodBankException(_mensajeConexion(e));
+    }
+  }
+
+  Future<List<UnidadSangre>> obtenerUnidades({
+    String? tipoSangre,
+    String? estado,
+  }) async {
+    final params = <String, String>{};
+    if (tipoSangre != null && tipoSangre != 'Todos') {
+      params['tipo_sangre'] = tipoSangre;
+    }
+    if (estado != null && estado.trim().isNotEmpty) {
+      params['estado'] = estado.trim();
+    }
+    final uri = Uri.parse('$_baseUrl/unidades').replace(
+      queryParameters: params.isEmpty ? null : params,
+    );
 
     try {
       final response = await _client.get(uri, headers: _jsonHeaders).timeout(_timeout);

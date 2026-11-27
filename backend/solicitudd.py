@@ -279,6 +279,61 @@ def obtener_estado_peticion(id_peticion: int) -> dict | None:
 # UNIDADES DE SANGRE: listar y editar
 # (registrar_unidad_sangre ya existe arriba)
 # ==========================================
+#Esta obtiene las unidades de sangre que ya caducaros
+def obtener_unidades_caducas():
+    query = """
+        SELECT 
+            u.id, 
+            u.tipo_sangre_id, 
+            u.donante_id, 
+            u.ubicacion_id,
+            u.fecha_hora_extraccion,
+            u.fecha_caducidad,
+            (u.fecha_caducidad - CURRENT_DATE) AS dias_restantes,
+            u.cantidad_ml,
+            ts.tipo AS nombre_tipo_sangre,
+            d.nombre_donante,
+            ub.nombre_ubicacion
+        FROM unidad_sangre u
+        JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id
+        JOIN donante d ON u.donante_id = d.id
+        JOIN ubicacion ub ON u.ubicacion_id = ub.id
+        WHERE u.fecha_caducidad < CURRENT_DATE
+        ORDER BY u.fecha_caducidad ASC;
+    """
+    
+    with get_connection() as conn:
+       with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(query)
+            return [dict(r) for r in cur.fetchall()]
+
+#esta obtiene las unidades de sangre que caducan el dia de ejecucion  del codigo
+def obtener_unidades_por_hoy():
+    query = """
+        SELECT 
+            u.id, 
+            u.tipo_sangre_id, 
+            u.donante_id, 
+            u.ubicacion_id,
+            u.fecha_hora_extraccion,
+            u.fecha_caducidad,
+            (u.fecha_caducidad - CURRENT_DATE) AS dias_restantes,
+            u.cantidad_ml,
+            ts.tipo AS nombre_tipo_sangre,
+            d.nombre_donante,
+            ub.nombre_ubicacion
+        FROM unidad_sangre u
+        JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id
+        JOIN donante d ON u.donante_id = d.id
+        JOIN ubicacion ub ON u.ubicacion_id = ub.id
+        WHERE u.fecha_caducidad = CURRENT_DATE
+        ORDER BY u.fecha_caducidad ASC;
+    """
+    
+    with get_connection() as conn:
+       with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(query)
+            return [dict(r) for r in cur.fetchall()]
 
 def obtener_todas_las_unidades_sangre():
     query = """

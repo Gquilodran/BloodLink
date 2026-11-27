@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from solicitudd import (
     editar_unidad_sangre,
     eliminar_unidad_sangre,
+    obtener_alertas_vencimiento,
     obtener_todas_las_ubicaciones,
     obtener_todas_las_unidades_sangre,
     obtener_unidad_sangre_por_id,
@@ -35,9 +36,15 @@ class UnidadUpdateRequest(BaseModel):
 
 
 @router.get("/unidades", summary="Listar unidades de sangre")
-def listar_unidades(tipo_sangre: Optional[str] = Query(default=None)):
-    """Retorna todas las unidades de sangre registradas, opcionalmente filtradas por tipo."""
-    unidades = obtener_todas_las_unidades_sangre()
+def listar_unidades(
+    tipo_sangre: Optional[str] = Query(default=None),
+    estado: Optional[str] = Query(
+        default=None,
+        description="Filtrar por vigencia: 'vigentes', 'caducadas'/'vencidas' o omitir para todas.",
+    ),
+):
+    """Retorna unidades de sangre con estado de vigencia, opcionalmente filtradas por tipo o vigencia."""
+    unidades = obtener_todas_las_unidades_sangre(estado=estado)
     if tipo_sangre and tipo_sangre.strip().lower() != "todos":
         tipo_filtro = tipo_sangre.strip().upper()
         unidades = [
@@ -45,6 +52,12 @@ def listar_unidades(tipo_sangre: Optional[str] = Query(default=None)):
             if (u.get("nombre_tipo_sangre") or "").upper() == tipo_filtro
         ]
     return unidades
+
+
+@router.get("/unidades/alertas-vencimiento", summary="Conteo de unidades por vencer hoy y vencidas")
+def alertas_vencimiento():
+    """Retorna la cantidad de unidades vigentes que vencen hoy, unidades ya vencidas y vigentes totales."""
+    return obtener_alertas_vencimiento()
 
 
 @router.get("/unidades/{unidad_id}", summary="Obtener una unidad de sangre por ID")
