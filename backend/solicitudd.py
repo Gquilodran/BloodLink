@@ -282,16 +282,27 @@ def obtener_estado_peticion(id_peticion: int) -> dict | None:
 
 def obtener_todas_las_unidades_sangre():
     query = """
-        SELECT u.id, u.tipo_sangre_id, u.donante_id, u.ubicacion_id,
-               u.fecha_hora_extraccion, u.fecha_caducidad, u.cantidad_ml,
-               ts.tipo AS nombre_tipo_sangre,
-               d.nombre_donante, ub.nombre_ubicacion
-        FROM unidad_sangre u
-        JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id
-        LEFT JOIN donante d ON u.donante_id = d.id
-        LEFT JOIN ubicacion ub ON u.ubicacion_id = ub.id
-        ORDER BY u.id DESC;
-    """
+    SELECT 
+        u.id, 
+        u.tipo_sangre_id, 
+        u.donante_id, 
+        u.ubicacion_id,
+        u.fecha_hora_extraccion,
+        u.fecha_caducidad,
+        (u.fecha_caducidad - CURRENT_DATE) AS dias_restantes,
+        u.cantidad_ml,
+        ts.tipo AS nombre_tipo_sangre,
+        d.nombre_donante,
+        ub.nombre_ubicacion
+    FROM unidad_sangre u
+    JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id
+    JOIN donante d ON u.donante_id = d.id
+    JOIN ubicacion ub ON u.ubicacion_id = ub.id
+    WHERE u.fecha_caducidad >= CURRENT_DATE
+    ORDER BY u.fecha_caducidad ASC;
+"""
+
+
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(query)
