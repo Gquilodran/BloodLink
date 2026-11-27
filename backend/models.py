@@ -1,6 +1,6 @@
 from datetime import datetime, date, timezone
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from db import Base
 
@@ -34,7 +34,7 @@ class Cita(Base):
     estado = Column(String(20), nullable=False, default="pendiente")
     observaciones = Column(Text, nullable=True)
     fecha_creacion = Column(DateTime, server_default=func.now())
-
+    donante = relationship("Donante")
 # Esquema para crear una cita
 class CitaCreate(BaseModel):
     id_donante: int
@@ -49,6 +49,7 @@ class CitaUpdate(BaseModel):
     estado: Optional[str] = None  # "pendiente", "completada", "cancelada"
     observaciones: Optional[str] = None
 
+EstadoCita = Literal["pendiente", "completada", "cancelada"]
 class CitaResponse(BaseModel):
     id_cita: int
     id_donante: int
@@ -86,7 +87,8 @@ class Donante(Base):
     tipo_sangre_id = Column(Integer, ForeignKey("tipo_sangre.id"), nullable=True)
 
     tipo_sangre = relationship("TipoSangre", back_populates="donantes")
-
+    citas = relationship("Cita", back_populates="donante")
+    
     def to_string(self) -> str:
         tipo = self.tipo_sangre.tipo if self.tipo_sangre else "Desconocido"
         return f"Donante #{self.id}: {self.nombre_donante} (Tipo de sangre: {tipo})"
