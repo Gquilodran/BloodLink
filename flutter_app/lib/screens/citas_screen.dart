@@ -1,19 +1,144 @@
-import 'package:flutter/material.dart';
-import '../models/cita.dart';
+iimport 'package:flutter/material.dart';
 import '../services/cita_service.dart';
 
+
+// ===========================================================================
+// Pestaña "Citas de extracción": listado + botón de creación
+// ===========================================================================
 class CitasScreen extends StatefulWidget {
-  final Cita? citaExistente;
-
-  const CitasScreen({super.key, this.citaExistente});
-
-  bool get esEdicion => citaExistente != null;
+  const CitasScreen({super.key});
 
   @override
   State<CitasScreen> createState() => _CitasScreenState();
 }
 
 class _CitasScreenState extends State<CitasScreen> {
+  final _citaService = CitaService();
+  List<Cita> _citas = [];
+  bool _cargando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarCitas();
+  }
+
+  Future<void> _cargarCitas() async {
+    setState(() => _cargando = true);
+    try {
+      final lista = await _citaService.listarCitas();
+      setState(() => _citas = lista);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar citas: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
+  }
+
+  Future<void> _abrirFormulario({Cita? cita}) async {
+    final res = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CitaFormScreen(citaExistente: cita),
+      ),
+    );
+    if (res == true) _cargarCitas();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Citas de extracción',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _cargarCitas,
+            ),
+            ElevatedButton.icon(
+              onPressed: () => _abrirFormulario(),
+              icon: const Icon(Icons.add),
+              label: const Text('Nueva cita'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 15),
+        if (_cargando)
+          const Padding(
+            padding: EdgeInsets.all(30),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_citas.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(30),
+            child: Text('No hay citas registradas.'),
+          )
+        else
+          ..._citas.map(
+                (c) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: OutlinedButton(
+                onPressed: () => _abrirFormulario(cita: c),
+                style: OutlinedButton.styleFrom(
+                  alignment: Alignment.centerLeft,
+                  foregroundColor: Colors.black87,
+                  padding: const EdgeInsets.all(16),
+                  side: const BorderSide(color: Color(0xFFE5E7EB)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.event, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Donante #${c.idDonante}',
+                              style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Text('${c.fechaHora} — ${c.estado}',
+                              style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.edit, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+
+// ===========================================================================
+// Formulario de creación / edición (pantalla empujada con Navigator)
+// ===========================================================================
+class CitaFormScreen extends StatefulWidget {
+  final Cita? citaExistente;
+
+  const CitaFormScreen({super.key, this.citaExistente});
+
+  bool get esEdicion => citaExistente != null;
+
+  @override
+  State<CitaFormScreen> createState() => _CitaFormScreenState();
+}
+
+class _CitaFormScreenState extends State<CitaFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _citaService = CitaService();
 
@@ -61,7 +186,8 @@ class _CitasScreenState extends State<CitasScreen> {
     );
     if (hora == null) return;
     setState(() {
-      _fechaHora = DateTime(fecha.year, fecha.month, fecha.day, hora.hour, hora.minute);
+      _fechaHora =
+          DateTime(fecha.year, fecha.month, fecha.day, hora.hour, hora.minute);
     });
   }
 
@@ -101,7 +227,9 @@ class _CitasScreenState extends State<CitasScreen> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.esEdicion ? 'Cita actualizada' : 'Cita creada')),
+        SnackBar(
+          content: Text(widget.esEdicion ? 'Cita actualizada' : 'Cita creada'),
+        ),
       );
       Navigator.pop(context, true);
     } catch (e) {
@@ -159,7 +287,8 @@ class _CitasScreenState extends State<CitasScreen> {
                     DropdownMenuItem(value: 'completada', child: Text('Completada')),
                     DropdownMenuItem(value: 'cancelada', child: Text('Cancelada')),
                   ],
-                  onChanged: (v) => setState(() => _estado = v ?? 'pendiente'),
+                  onChanged: (v) =>
+                      setState(() => _estado = v ?? 'pendiente'),
                 ),
               const SizedBox(height: 12),
               TextFormField(
