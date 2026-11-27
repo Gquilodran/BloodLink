@@ -35,6 +35,20 @@ class Cita(Base):
     observaciones = Column(Text, nullable=True)
     fecha_creacion = Column(DateTime, server_default=func.now())
 
+# Esquema para crear una cita
+class CitaCreate(BaseModel):
+    id_donante: int
+    id_personal: Optional[int] = None
+    fecha_hora: datetime
+    observaciones: Optional[str] = None
+
+# Esquema para editar una cita
+class CitaUpdate(BaseModel):
+    fecha_hora: Optional[datetime] = None
+    id_personal: Optional[int] = None
+    estado: Optional[str] = None  # "pendiente", "completada", "cancelada"
+    observaciones: Optional[str] = None
+
 
 class CargoPersonal(Base):
     __tablename__ = "cargo_personal"
