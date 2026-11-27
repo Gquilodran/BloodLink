@@ -3,7 +3,7 @@ import '../widgets/sidebar.dart';
 import 'inventario_screen.dart';
 import 'ingresar_unidad_screen.dart';
 import 'solicitudes_screen.dart';
-import 'citas_screen.dart'; // NUEVO: pantalla de citas
+import 'planning_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'Inventario de sangre',
     'Ingresar unidad de sangre',
     'Solicitudes de sangre',
-    'Citas de extracción', // <-- nueva opción
+    'Planning semanal',
   ];
 
   void navegar(int index) {
@@ -90,12 +90,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return const SolicitudesScreen();
     }
 
-    // NUEVO: ruta para la pantalla de citas
     if (selectedIndex == 4) {
-      return const CitasScreen();
+      return const PlanningScreen();
     }
 
-    // Contenido por defecto (Inicio)
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

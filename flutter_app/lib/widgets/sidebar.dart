@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class Sidebar extends StatelessWidget {
@@ -18,7 +17,7 @@ class Sidebar extends StatelessWidget {
       ('Inventario', Icons.inventory_2_outlined),
       ('Ingresar unidad', Icons.add_circle_outline),
       ('Solicitudes', Icons.assignment_outlined),
-      ('Citas de extracción', Icons.event_outlined),
+      ('Planning semanal', Icons.calendar_month_outlined),
     ];
 
     return Container(
@@ -50,25 +49,28 @@ class Sidebar extends StatelessWidget {
                 horizontal: 10,
                 vertical: 3,
               ),
-              child: ListTile(
-                dense: true,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+              child: Material(
+                type: MaterialType.transparency,
+                child: ListTile(
+                  dense: true,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  selected: selectedIndex == i,
+                  selectedTileColor: const Color(0xFFE5E7EB),
+                  leading: Icon(
+                    opciones[i].$2,
+                    size: 21,
+                    color: selectedIndex == i
+                        ? const Color(0xFFB71C1C)
+                        : Colors.black54,
+                  ),
+                  title: Text(
+                    opciones[i].$1,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  onTap: () => onSelect(i),
                 ),
-                selected: selectedIndex == i,
-                selectedTileColor: const Color(0xFFE5E7EB),
-                leading: Icon(
-                  opciones[i].$2,
-                  size: 21,
-                  color: selectedIndex == i
-                      ? const Color(0xFFB71C1C)
-                      : Colors.black54,
-                ),
-                title: Text(
-                  opciones[i].$1,
-                  style: const TextStyle(fontSize: 14),
-                ),
-                onTap: () => onSelect(i),
               ),
             ),
         ],
