@@ -1,7 +1,52 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
-import '../models/cita.dart';
+
+
+class Cita {
+  final int idCita;
+  final int idDonante;
+  final int? idPersonal;
+  final DateTime fechaHora;
+  final String estado;
+  final String? observaciones;
+  final DateTime? fechaCreacion;
+
+  Cita({
+    required this.idCita,
+    required this.idDonante,
+    this.idPersonal,
+    required this.fechaHora,
+    required this.estado,
+    this.observaciones,
+    this.fechaCreacion,
+  });
+
+  factory Cita.fromJson(Map<String, dynamic> json) {
+    return Cita(
+      idCita: json['id_cita'] as int,
+      idDonante: json['id_donante'] as int,
+      idPersonal: json['id_personal'] as int?,
+      fechaHora: DateTime.parse(json['fecha_hora'] as String),
+      estado: json['estado'] as String,
+      observaciones: json['observaciones'] as String?,
+      fechaCreacion: json['fecha_creacion'] != null
+          ? DateTime.parse(json['fecha_creacion'] as String)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id_donante': idDonante,
+      'id_personal': idPersonal,
+      'fecha_hora': fechaHora.toIso8601String(),
+      'estado': estado,
+      'observaciones': observaciones,
+    };
+  }
+}
+
 
 class CitaService {
   final String _baseUrl = AppConfig.apiUrl;
