@@ -280,8 +280,20 @@ def obtener_estado_peticion(id_peticion: int) -> dict | None:
 # (registrar_unidad_sangre ya existe arriba)
 # ==========================================
 #Esta obtiene las unidades de sangre que ya caducaros
-def obtener_unidades_caducas():
-    query = """
+def obtener_todas_las_unidades_sangre(estado: str = None):
+    where_clause = ""
+    order_clause = "ORDER BY u.fecha_caducidad ASC, u.id ASC"
+
+    if estado:
+        estado_norm = estado.strip().lower()
+        if estado_norm == "vigentes":
+            where_clause = "WHERE u.fecha_caducidad >= CURRENT_DATE"
+            order_clause = "ORDER BY u.fecha_caducidad ASC, u.id ASC"
+        elif estado_norm in ("caducadas", "vencidas"):
+            where_clause = "WHERE u.fecha_caducidad < CURRENT_DATE"
+            order_clause = "ORDER BY u.fecha_caducidad DESC, u.id DESC"
+
+    query = f"""
         SELECT 
             u.id, 
             u.tipo_sangre_id, 
@@ -289,17 +301,19 @@ def obtener_unidades_caducas():
             u.ubicacion_id,
             u.fecha_hora_extraccion,
             u.fecha_caducidad,
-            (u.fecha_caducidad - CURRENT_DATE) AS dias_restantes,
+            (u.fecha_caducidad - CURRENT_DATE)::int AS dias_restantes,
+            (u.fecha_caducidad < CURRENT_DATE) AS esta_vencida,
+            (u.fecha_caducidad = CURRENT_DATE) AS vence_hoy,
             u.cantidad_ml,
             ts.tipo AS nombre_tipo_sangre,
             d.nombre_donante,
             ub.nombre_ubicacion
         FROM unidad_sangre u
         JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id
-        JOIN donante d ON u.donante_id = d.id
-        JOIN ubicacion ub ON u.ubicacion_id = ub.id
-        WHERE u.fecha_caducidad < CURRENT_DATE
-        ORDER BY u.fecha_caducidad ASC;
+        LEFT JOIN donante d ON u.donante_id = d.id
+        LEFT JOIN ubicacion ub ON u.ubicacion_id = ub.id
+        {where_clause}
+        {order_clause}
     """
     
     with get_connection() as conn:
@@ -307,61 +321,26 @@ def obtener_unidades_caducas():
             cur.execute(query)
             return [dict(r) for r in cur.fetchall()]
 
-#esta obtiene las unidades de sangre que caducan el dia de ejecucion  del codigo
-def obtener_unidades_por_hoy():
-    query = """
-        SELECT 
-            u.id, 
-            u.tipo_sangre_id, 
-            u.donante_id, 
-            u.ubicacion_id,
-            u.fecha_hora_extraccion,
-            u.fecha_caducidad,
-            (u.fecha_caducidad - CURRENT_DATE) AS dias_restantes,
-            u.cantidad_ml,
-            ts.tipo AS nombre_tipo_sangre,
-            d.nombre_donante,
-            ub.nombre_ubicacion
-        FROM unidad_sangre u
-        JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id
-        JOIN donante d ON u.donante_id = d.id
-        JOIN ubicacion ub ON u.ubicacion_id = ub.id
-        WHERE u.fecha_caducidad = CURRENT_DATE
-        ORDER BY u.fecha_caducidad ASC;
+def obtener_alertas_vencimiento() -> dict:
     """
-    
-    with get_connection() as conn:
-       with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query)
-            return [dict(r) for r in cur.fetchall()]
-
-def obtener_todas_las_unidades_sangre():
+    Retorna el conteo de unidades vigentes que vencen hoy (fecha_caducidad = CURRENT_DATE),
+    las ya vencidas (fecha_caducidad < CURRENT_DATE) y las vigentes totales.
+    """
     query = """
-    SELECT 
-        u.id, 
-        u.tipo_sangre_id, 
-        u.donante_id, 
-        u.ubicacion_id,
-        u.fecha_hora_extraccion,
-        u.fecha_caducidad,
-        (u.fecha_caducidad - CURRENT_DATE) AS dias_restantes,
-        u.cantidad_ml,
-        ts.tipo AS nombre_tipo_sangre,
-        d.nombre_donante,
-        ub.nombre_ubicacion
-    FROM unidad_sangre u
-    JOIN tipo_sangre ts ON u.tipo_sangre_id = ts.id
-    JOIN donante d ON u.donante_id = d.id
-    JOIN ubicacion ub ON u.ubicacion_id = ub.id
-    WHERE u.fecha_caducidad >= CURRENT_DATE
-    ORDER BY u.fecha_caducidad ASC;
-"""
-
-
+        SELECT
+            COALESCE(COUNT(*) FILTER (WHERE fecha_caducidad = CURRENT_DATE), 0)::int AS vencen_hoy,
+            COALESCE(COUNT(*) FILTER (WHERE fecha_caducidad < CURRENT_DATE), 0)::int AS vencidas,
+            COALESCE(COUNT(*) FILTER (WHERE fecha_caducidad >= CURRENT_DATE), 0)::int AS vigentes
+        FROM unidad_sangre;
+    """
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(query)
-            return [dict(r) for r in cur.fetchall()]
+            fila = cur.fetchone()
+            return dict(fila) if fila else {"vencen_hoy": 0, "vencidas": 0, "vigentes": 0}
+        
+
+
 
 
 def editar_unidad_sangre(unidad_id, tipo_sangre=None, nombre_donante=None,
