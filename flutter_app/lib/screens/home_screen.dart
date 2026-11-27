@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../widgets/sidebar.dart';
 import 'inventario_screen.dart';
@@ -16,6 +15,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int selectedIndex = 0;
 
+  // NUEVO: se añade el título para el índice 4
   final titulos = [
     'Inicio',
     'Inventario de sangre',
@@ -38,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Sidebar(
             selectedIndex: selectedIndex,
             onSelect: navegar,
+            // NOTA: deberás añadir la opción 'Citas' dentro de Sidebar
           ),
           Expanded(
             child: Column(
@@ -106,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 10),
         const Text(
           'Seleccione una opción para gestionar '
-          'las unidades y solicitudes de sangre.',
+              'las unidades y solicitudes de sangre.',
           style: TextStyle(color: Colors.black54),
         ),
         const SizedBox(height: 30),
@@ -121,6 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _opcion('Consultar inventario', 1),
         _opcion('Registrar unidad de sangre', 2),
         _opcion('Ver solicitudes de sangre', 3),
+        _opcion('Gestionar citas de extracción', 4), // NUEVO acceso rápido
       ],
     );
   }

@@ -11,6 +11,7 @@ import uvicorn
 
 from config import settings
 from db import init_db
+from routes.citas import router as citas_router
 from routes.files import router as files_router
 from routes.donors import router as donors_router
 from routes.unidades import router as unidades_router
@@ -53,6 +54,7 @@ app.include_router(files_router)
 app.include_router(donors_router)
 app.include_router(unidades_router)
 app.include_router(solicitudes_router)
+app.include_router(citas_router)
 
 # TODO: Registrar futuros routers:
 # app.include_router(auth_router)
