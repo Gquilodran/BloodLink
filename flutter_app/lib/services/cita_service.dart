@@ -49,7 +49,7 @@ class Cita {
 
 
 class CitaService {
-  final String _baseUrl = AppConfig.apiUrl;
+  final String _baseUrl = AppConfig.apiBaseUrl;
 
   Future<List<Cita>> listarCitas() async {
     final resp = await http.get(Uri.parse('$_baseUrl/citas/'));
