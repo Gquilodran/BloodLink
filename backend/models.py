@@ -49,6 +49,15 @@ class CitaUpdate(BaseModel):
     estado: Optional[str] = None  # "pendiente", "completada", "cancelada"
     observaciones: Optional[str] = None
 
+class CitaResponse(BaseModel):
+    id_cita: int
+    id_donante: int
+    id_personal: Optional[int] = None
+    fecha_hora: datetime
+    estado: EstadoCita
+    observaciones: Optional[str] = None
+    fecha_creacion: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
 class CargoPersonal(Base):
     __tablename__ = "cargo_personal"
