@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import '../models/cita.dart';
 import '../services/cita_service.dart';
 
-class CitaScreen extends StatefulWidget {
+class CitasScreen extends StatefulWidget {
   final Cita? citaExistente;
 
-  const CitaScreen({super.key, this.citaExistente});
+  const CitasScreen({super.key, this.citaExistente});
 
   bool get esEdicion => citaExistente != null;
 
   @override
-  State<CitaScreen> createState() => _CitaScreenState();
+  State<CitasScreen> createState() => _CitasScreenState();
 }
 
-class _CitaScreenState extends State<CitaScreen> {
+class _CitasScreenState extends State<CitasScreen> {
   final _formKey = GlobalKey<FormState>();
   final _citaService = CitaService();
 
