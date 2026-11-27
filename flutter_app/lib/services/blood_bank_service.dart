@@ -234,6 +234,66 @@ class BloodBankService {
     }
   }
 
+  Future<void> eliminarSolicitud(int id) async {
+    final uri = Uri.parse('$_baseUrl/solicitudes/$id');
+    try {
+      final response = await _client.delete(uri, headers: _jsonHeaders).timeout(_timeout);
+      _decodificarRespuesta(response);
+    } catch (e) {
+      throw BloodBankException(_mensajeConexion(e));
+    }
+  }
+
+  Future<SolicitudSangre> editarSolicitud(
+    int id, {
+    String? tipoSangre,
+    String? centroSalud,
+    String? prioridad,
+    double? cantidadMl,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/solicitudes/$id');
+    final body = <String, dynamic>{};
+    if (tipoSangre != null && tipoSangre.trim().isNotEmpty) {
+      body['tipo_sangre'] = tipoSangre.trim().toUpperCase();
+    }
+    if (centroSalud != null && centroSalud.trim().isNotEmpty) {
+      body['centro_salud'] = centroSalud.trim();
+    }
+    if (prioridad != null && prioridad.trim().isNotEmpty) {
+      body['prioridad'] = prioridad.trim();
+    }
+    if (cantidadMl != null) {
+      body['cantidad_ml'] = cantidadMl;
+    }
+
+    try {
+      final response = await _client
+          .put(uri, headers: _jsonHeaders, body: jsonEncode(body))
+          .timeout(_timeout);
+      final data = _decodificarRespuesta(response) as Map<String, dynamic>;
+      return SolicitudSangre.fromJson(data);
+    } catch (e) {
+      throw BloodBankException(_mensajeConexion(e));
+    }
+  }
+
+  Future<SolicitudSangre> cambiarEstadoSolicitud(int id, String nuevoEstado) async {
+    final uri = Uri.parse('$_baseUrl/solicitudes/$id/estado');
+    try {
+      final response = await _client
+          .patch(
+            uri,
+            headers: _jsonHeaders,
+            body: jsonEncode({'estado': nuevoEstado.trim().toLowerCase()}),
+          )
+          .timeout(_timeout);
+      final data = _decodificarRespuesta(response) as Map<String, dynamic>;
+      return SolicitudSangre.fromJson(data);
+    } catch (e) {
+      throw BloodBankException(_mensajeConexion(e));
+    }
+  }
+
   Future<List<String>> obtenerUbicaciones() async {
     final uri = Uri.parse('$_baseUrl/ubicaciones');
     try {

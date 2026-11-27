@@ -182,8 +182,8 @@ def crear_peticion_sangre(
         
 def actualizar_estado_peticion(id_peticion: int, nuevo_estado: str) -> dict:
     """
-    Actualiza el estado de una petición existente ('pendiente', 'completada', 'cancelada').
-    Si el estado no es válido o el ID no existe, lanza ValueError y hace rollback.
+    Actualiza el estado de una petición existente ('pendiente', 'completada', 'cancelada')
+    y sincroniza fecha_completada (NOW() si cierra, NULL si vuelve a 'pendiente').
     """
     estados_validos = ("pendiente", "completada", "cancelada")
     nuevo_estado = nuevo_estado.strip().lower()
@@ -193,18 +193,26 @@ def actualizar_estado_peticion(id_peticion: int, nuevo_estado: str) -> dict:
             f"Estado '{nuevo_estado}' no válido. Opciones permitidas: {estados_validos}."
         )
 
+    query = (
+        """
+        UPDATE peticion_sangre
+        SET estado = %s
+        WHERE id = %s
+        RETURNING *;
+        """
+        if nuevo_estado in ("completada", "cancelada")
+        else """
+        UPDATE peticion_sangre
+        SET estado = %s, fecha_completada = NULL
+        WHERE id = %s
+        RETURNING *;
+        """
+    )
+
     with get_connection() as conn:
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(
-                    """
-                    UPDATE peticion_sangre
-                    SET estado = %s
-                    WHERE id = %s
-                    RETURNING *;
-                    """,
-                    (nuevo_estado, id_peticion),
-                )
+                cur.execute(query, (nuevo_estado, id_peticion))
                 peticion_actualizada = cur.fetchone()
 
                 if not peticion_actualizada:
@@ -368,6 +376,95 @@ def editar_unidad_sangre(unidad_id, tipo_sangre=None, nombre_donante=None,
             conn.rollback()
             raise
 
+def editar_peticion_sangre(
+    id_peticion: int,
+    tipo_sangre: str = None,
+    cantidad_ml: float = None,
+    prioridad: str = None,
+    centro_salud: str = None,
+    estado: str = None,
+) -> dict:
+    """Edita los campos proporcionados de una petición de sangre existente."""
+    campos, valores = [], []
+
+    with get_connection() as conn:
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SELECT id FROM peticion_sangre WHERE id = %s;", (id_peticion,))
+                if not cur.fetchone():
+                    raise ValueError(f"No existe la petición con ID {id_peticion}.")
+
+                if tipo_sangre is not None:
+                    tipo_limpio = tipo_sangre.strip().upper()
+                    cur.execute("SELECT id FROM tipo_sangre WHERE tipo = %s;", (tipo_limpio,))
+                    fila_tipo = cur.fetchone()
+                    if not fila_tipo:
+                        raise ValueError(f"El tipo de sangre '{tipo_limpio}' no existe en la BD.")
+                    campos.append("id_tipo = %s")
+                    valores.append(fila_tipo["id"])
+
+                if cantidad_ml is not None:
+                    if cantidad_ml <= 0:
+                        raise ValueError("La cantidad en ml debe ser mayor a 0.")
+                    campos.append("cantidad_ml = %s")
+                    valores.append(cantidad_ml)
+
+                if prioridad is not None:
+                    campos.append("prioridad = %s")
+                    valores.append(prioridad.strip())
+
+                if centro_salud is not None:
+                    campos.append("centro_salud = %s")
+                    valores.append(centro_salud.strip())
+
+                if estado is not None:
+                    estados_validos = ("pendiente", "completada", "cancelada")
+                    estado_limpio = estado.strip().lower()
+                    if estado_limpio not in estados_validos:
+                        raise ValueError(f"Estado '{estado_limpio}' no válido.")
+                    campos.append("estado = %s")
+                    valores.append(estado_limpio)
+                    if estado_limpio in ("completada", "cancelada"):
+                        campos.append("fecha_completada = NOW()")
+                    else:
+                        campos.append("fecha_completada = NULL")
+
+                if not campos:
+                    raise ValueError("Debes indicar al menos un campo a editar.")
+
+                valores.append(id_peticion)
+                cur.execute(
+                    f"UPDATE peticion_sangre SET {', '.join(campos)} WHERE id = %s RETURNING *;",
+                    tuple(valores),
+                )
+                resultado = dict(cur.fetchone())
+
+            conn.commit()
+            return resultado
+        except Exception:
+            conn.rollback()
+            raise
+
+
+def eliminar_peticion_sangre(id_peticion: int) -> dict:
+    """Elimina una petición de sangre de la base de datos por su ID."""
+    with get_connection() as conn:
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    "DELETE FROM peticion_sangre WHERE id = %s RETURNING *;",
+                    (id_peticion,),
+                )
+                fila = cur.fetchone()
+                if not fila:
+                    raise ValueError(f"No existe la petición con ID {id_peticion}.")
+                resultado = dict(fila)
+            conn.commit()
+            return resultado
+        except Exception:
+            conn.rollback()
+            raise
+
 def marcar_peticion_completa(id_peticion: int) -> dict:
     """
     Marca una petición como 'completada' y registra la fecha y hora.
@@ -379,7 +476,7 @@ def marcar_peticion_completa(id_peticion: int) -> dict:
                 cur.execute(
                     """
                     UPDATE peticion_sangre
-                    SET estado = 'completada', fecha_completada = NOW()
+                    SET estado = 'completada', fecha_completada = NOW() AT TIME ZONE 'America/Santiago'
                     WHERE id = %s
                     RETURNING *;
                     """,
@@ -407,7 +504,7 @@ def marcar_peticion_cancelada(id_peticion: int) -> dict:
                 cur.execute(
                     """
                     UPDATE peticion_sangre
-                    SET estado = 'cancelada', fecha_completada = NOW()
+                    SET estado = 'cancelada', fecha_completada = NOW() AT TIME ZONE 'America/Santiago'
                     WHERE id = %s
                     RETURNING *;
                     """,

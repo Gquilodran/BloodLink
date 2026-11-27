@@ -10,6 +10,8 @@ from solicitudd import (
     marcar_peticion_completa,
     obtener_peticion_por_id,
     obtener_todas_las_peticiones,
+    editar_peticion_sangre,
+    eliminar_peticion_sangre
 )
 
 router = APIRouter(prefix="/solicitudes", tags=["solicitudes"])
@@ -118,4 +120,47 @@ def cambiar_estado_solicitud(solicitud_id: int, payload: SolicitudEstadoRequest)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al actualizar el estado: {e}",
+        )
+
+
+class SolicitudUpdateRequest(BaseModel):
+    tipo_sangre: Optional[str] = Field(default=None, min_length=2, max_length=3)
+    cantidad_ml: Optional[float] = Field(default=None, gt=0)
+    prioridad: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    centro_salud: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    estado: Optional[str] = Field(default=None, min_length=1, max_length=30)
+
+
+@router.put("/{solicitud_id}", summary="Editar una solicitud de sangre")
+def editar_solicitud(solicitud_id: int, payload: SolicitudUpdateRequest):
+    try:
+        editar_peticion_sangre(
+            id_peticion=solicitud_id,
+            tipo_sangre=payload.tipo_sangre,
+            cantidad_ml=payload.cantidad_ml,
+            prioridad=payload.prioridad,
+            centro_salud=payload.centro_salud,
+            estado=payload.estado,
+        )
+        return obtener_peticion_por_id(solicitud_id)
+    except ValueError as e:
+        mensaje = str(e)
+        code = status.HTTP_404_NOT_FOUND if "no existe" in mensaje.lower() else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=code, detail=mensaje)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al editar la solicitud: {e}",
+        )
+@router.delete("/{solicitud_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Eliminar una solicitud de sangre")
+def eliminar_solicitud(solicitud_id: int):
+    try:
+        eliminar_peticion_sangre(solicitud_id)
+        return None
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar la solicitud: {e}",
         )

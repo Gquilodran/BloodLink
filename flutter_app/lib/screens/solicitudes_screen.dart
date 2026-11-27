@@ -37,6 +37,8 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
     'Urgencia Vital',
   ];
 
+  final List<String> _estadosDisponibles = ['pendiente', 'completada', 'cancelada'];
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +71,54 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
         _error = e.message;
         _cargando = false;
       });
+    }
+  }
+
+  Future<void> _eliminarSolicitud(SolicitudSangre solicitud) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar solicitud'),
+        content: Text(
+          '¿Confirmar la eliminación de la solicitud #${solicitud.id} (${solicitud.tipoSangre}) '
+          'de "${solicitud.centroSalud}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB71C1C),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  if (confirmar != true || !mounted) return;
+
+    try {
+      await _service.eliminarSolicitud(solicitud.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Solicitud #${solicitud.id} eliminada.'),
+          backgroundColor: Colors.green.shade700,
+        ),
+      );
+      _cargarSolicitudes();
+    } on BloodBankException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
     }
   }
 
@@ -114,6 +164,183 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
     }
   }
 
+  Future<void> _editarSolicitud(SolicitudSangre solicitud) async {
+    final centroSaludCtrl = TextEditingController(text: solicitud.centroSalud);
+    final cantidadCtrl = TextEditingController(text: solicitud.cantidadMl.toInt().toString());
+    String prioridadSeleccionada = solicitud.prioridad;
+    String estadoSeleccionado = solicitud.estado;
+    String tipoSeleccionado = solicitud.tipoSangre;
+    final formKey = GlobalKey<FormState>();
+
+    final guardado = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Editar solicitud #${solicitud.id}'),
+              content: SizedBox(
+                width: 420,
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        initialValue: _tiposSangre.contains(tipoSeleccionado)
+                            ? tipoSeleccionado
+                            : _tiposSangre.first,
+                        decoration: const InputDecoration(
+                          labelText: 'Tipo de sangre',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _tiposSangre
+                            .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                            .toList(),
+                        onChanged: (valor) {
+                          if (valor != null) {
+                            setDialogState(() => tipoSeleccionado = valor);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: cantidadCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Volumen (ml)',
+                          suffixText: 'ml',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (v) {
+                          final texto = v?.trim() ?? '';
+                          if (texto.isEmpty) return 'Campo obligatorio';
+                          final ml = int.tryParse(texto);
+                          if (ml == null || ml <= 0) {
+                            return 'Ingrese un entero mayor a 0';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: centroSaludCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Centro Salud',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Campo obligatorio' : null,
+                      ),
+                      const SizedBox(height: 14),
+                      DropdownButtonFormField<String>(
+                        initialValue: _prioridades.contains(prioridadSeleccionada)
+                            ? prioridadSeleccionada
+                            : _prioridades.first,
+                        decoration: const InputDecoration(
+                          labelText: 'Prioridad',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _prioridades
+                            .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                            .toList(),
+                        onChanged: (valor) {
+                          if (valor != null) {
+                            setDialogState(() => prioridadSeleccionada = valor);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      DropdownButtonFormField<String>(
+                        initialValue: _estadosDisponibles.contains(estadoSeleccionado)
+                            ? estadoSeleccionado
+                            : _estadosDisponibles.first,
+                        decoration: const InputDecoration(
+                          labelText: 'Estado actual',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _estadosDisponibles
+                            .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                            .toList(),
+                        onChanged: (valor) {
+                          if (valor != null) {
+                            setDialogState(() => estadoSeleccionado = valor);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (formKey.currentState?.validate() ?? false) {
+                      Navigator.of(context).pop(true);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFB71C1C),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Guardar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (guardado == true && mounted) {
+      try {
+        await _service.editarSolicitud(
+          solicitud.id,
+          tipoSangre: tipoSeleccionado,
+          centroSalud: centroSaludCtrl.text,
+          prioridad: prioridadSeleccionada,
+          cantidadMl: double.parse(cantidadCtrl.text.trim()),
+        );
+
+        final estadoNuevo = estadoSeleccionado.trim().toLowerCase();
+        final estadoActual = solicitud.estado.trim().toLowerCase();
+
+        if (estadoNuevo != estadoActual) {
+          if (estadoNuevo == 'completada') {
+            await _service.completarSolicitud(solicitud.id);
+          } else if (estadoNuevo == 'cancelada') {
+            await _service.cancelarSolicitud(solicitud.id);
+          } else {
+            await _service.cambiarEstadoSolicitud(solicitud.id, estadoNuevo);
+          }
+        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Solicitud #${solicitud.id} actualizada.'),
+            backgroundColor: Colors.green.shade700,
+          ),
+        );
+        _cargarSolicitudes();
+      } on BloodBankException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    }
+
+    centroSaludCtrl.dispose();
+    cantidadCtrl.dispose();
+  }
+
   Future<void> _cambiarEstado(SolicitudSangre solicitud, bool completar) async {
     final accion = completar ? 'completar' : 'cancelar';
     final confirmar = await showDialog<bool>(
@@ -121,7 +348,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
       builder: (context) => AlertDialog(
         title: Text(completar ? 'Completar solicitud' : 'Cancelar solicitud'),
         content: Text(
-          '¿Desea $accion la solicitud #${solicitud.id} (${solicitud.tipoSangre} - '
+          '¿Desea $accion la solicitud #${solicitud.id} (${solicitud.tipoSangre} ; '
           '${solicitud.cantidadMl.toStringAsFixed(0)} ml) de "${solicitud.centroSalud}"?',
         ),
         actions: [
@@ -504,6 +731,7 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                     DataColumn(label: Text('Prioridad')),
                     DataColumn(label: Text('Fecha')),
                     DataColumn(label: Text('Estado')),
+                    DataColumn(label: Text('Modificar')),
                     DataColumn(label: Text('Acciones')),
                   ],
                   rows: filtradas.map((solicitud) {
@@ -554,6 +782,27 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                                     color: Colors.black54,
                                   ),
                                 ),
+                        ),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: 'Editar solicitud',
+                                icon: const Icon(Icons.edit_outlined, size: 20),
+                                onPressed: () => _editarSolicitud(solicitud),
+                              ),
+                              IconButton(
+                                tooltip: 'Eliminar solicitud',
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: Color(0xFFB71C1C),
+                                ),
+                                onPressed: () => _eliminarSolicitud(solicitud),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     );
