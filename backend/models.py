@@ -24,6 +24,18 @@ class Ubicacion(Base):
     nombre_ubicacion = Column(String(100), nullable=False)
 
 
+class Cita(Base):
+    __tablename__ = "cita"
+
+    id_cita = Column(Integer, primary_key=True, index=True)
+    id_donante = Column(Integer, ForeignKey("donante.id", ondelete="CASCADE"), nullable=False)
+    id_personal = Column(Integer, ForeignKey("personal_salud.id", ondelete="SET NULL"), nullable=True)
+    fecha_hora = Column(DateTime, nullable=False)
+    estado = Column(String(20), nullable=False, default="pendiente")
+    observaciones = Column(Text, nullable=True)
+    fecha_creacion = Column(DateTime, server_default=func.now())
+
+
 class CargoPersonal(Base):
     __tablename__ = "cargo_personal"
 
