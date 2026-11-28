@@ -47,7 +47,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
 
   Future<void> _cargarCitas() async {
   //Para testear la parte gráfica por ahora, quitar los /**/
-  await Future.delayed(const Duration(milliseconds: 300));
+  /*await Future.delayed(const Duration(milliseconds: 300));
     final ahora = DateTime.now();
 
     if (!mounted) return;
@@ -76,7 +76,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
       ];
       _cargando = false;
     });
-    return;
+    return; */
 
     try {
       final citas = await _citaService.listarCitas();
