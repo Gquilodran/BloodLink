@@ -12,10 +12,10 @@ if [[ -x "$BACKEND_DIR/venv/Scripts/python.exe" ]]; then
   PYTHON_BIN="$BACKEND_DIR/venv/Scripts/python.exe"
 elif [[ -x "$BACKEND_DIR/venv/bin/python" ]]; then
   PYTHON_BIN="$BACKEND_DIR/venv/bin/python"
-elif command -v python3 >/dev/null 2>&1; then
-  PYTHON_BIN="python3"
 elif command -v python >/dev/null 2>&1; then
   PYTHON_BIN="python"
+elif command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="python3"
 else
   echo "Error: No se encontró Python ni el entorno virtual en backend/venv." >&2
   exit 1
