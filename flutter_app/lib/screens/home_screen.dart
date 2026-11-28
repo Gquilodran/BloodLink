@@ -1,3 +1,4 @@
+import 'package:blood_link/screens/citas_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/blood_bank_service.dart';
 import '../widgets/sidebar.dart';
@@ -27,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'Inventario de sangre',
     'Ingresar unidad de sangre',
     'Solicitudes de sangre',
+    'Agendar cita',
     'Planning semanal',
   ];
 
@@ -346,6 +348,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (selectedIndex == 4) {
+      return const CitasScreen();
+    }
+
+    if (selectedIndex == 5) {
       return const PlanningScreen();
     }
 
@@ -377,7 +383,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _opcion('Consultar inventario', 1),
         _opcion('Registrar unidad de sangre', 2),
         _opcion('Ver solicitudes de sangre', 3),
-        _opcion('Gestionar citas de extracción', 4), // NUEVO acceso rápido
+        _opcion('Agendar citas de extracción', 4),
+        _opcion('Gestionar citas de extracción', 5), // NUEVO acceso rápido
       ],
     );
   }

@@ -17,6 +17,7 @@ class Sidebar extends StatelessWidget {
       ('Inventario', Icons.inventory_2_outlined),
       ('Ingresar unidad', Icons.add_circle_outline),
       ('Solicitudes', Icons.assignment_outlined),
+      ('Agendar cita', Icons.assignment_add),
       ('Planning semanal', Icons.calendar_month_outlined),
     ];
 
