@@ -47,7 +47,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
 
   Future<void> _cargarCitas() async {
   //Para testear la parte gráfica por ahora, quitar los /**/
-  /*await Future.delayed(const Duration(milliseconds: 300));
+  await Future.delayed(const Duration(milliseconds: 300));
     final ahora = DateTime.now();
 
     if (!mounted) return;
@@ -76,7 +76,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
       ];
       _cargando = false;
     });
-    return; */
+    return;
 
     try {
       final citas = await _citaService.listarCitas();
@@ -542,15 +542,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 child: Row(
                   children: [
                     for (int i = 0; i < 7; i++)
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                          ),
-                          child: _columnaDia(i),
-                        ),
-                      ),
-                  ],                ),
+                      _columnaDia(i)
+                  ],
+                ),
               ),
             );
           },
