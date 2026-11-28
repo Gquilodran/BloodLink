@@ -278,76 +278,66 @@ class _InventarioScreenState extends State<InventarioScreen> {
 
   Widget _badgeVigencia(UnidadSangre unidad) {
     if (unidad.estaVencida) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEE2E2),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFCA5A5)),
-        ),
-        child: const Text(
-          'Caducada',
-          style: TextStyle(
-            color: Color(0xFF991B1B),
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+      return _buildChip(
+        texto: 'Caducada',
+        bg: const Color(0xFFFEE2E2),
+        border: const Color(0xFFFCA5A5),
+        fg: const Color(0xFF991B1B),
+        bold: true,
       );
     }
 
     if (unidad.venceHoy) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEF3C7),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFCD34D)),
-        ),
-        child: const Text(
-          'Vence hoy',
-          style: TextStyle(
-            color: Color(0xFF92400E),
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+      return _buildChip(
+        texto: 'Vence hoy',
+        bg: const Color(0xFFFEF3C7),
+        border: const Color(0xFFFCD34D),
+        fg: const Color(0xFF92400E),
+        bold: true,
       );
     }
 
     final dias = unidad.diasRestantes;
     if (dias != null && dias <= 3) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFEDD5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFDBA74)),
-        ),
-        child: Text(
-          'Por vencer ($dias d)',
-          style: const TextStyle(
-            color: Color(0xFF9A3412),
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+      return _buildChip(
+        texto: 'Por vencer ($dias d)',
+        bg: const Color(0xFFFFEDD5),
+        border: const Color(0xFFFDBA74),
+        fg: const Color(0xFF9A3412),
+        bold: true,
       );
     }
 
-    final texto = dias != null ? 'Vigente ($dias d)' : 'Vigente';
+    return _buildChip(
+      texto: dias != null ? 'Vigente ($dias d)' : 'Vigente',
+      bg: const Color(0xFFDCFCE7),
+      fg: const Color(0xFF166534),
+      bold: false,
+    );
+  }
+
+  Widget _buildChip({
+    required String texto,
+    required Color bg,
+    Color? border,
+    required Color fg,
+    required bool bold,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCFCE7),
+        color: bg,
         borderRadius: BorderRadius.circular(12),
+        border: border != null ? Border.all(color: border) : null,
       ),
       child: Text(
         texto,
-        style: const TextStyle(
-          color: Color(0xFF166534),
+        softWrap: false,
+        overflow: TextOverflow.visible,
+        style: TextStyle(
+          color: fg,
           fontSize: 12,
-          fontWeight: FontWeight.w600,
+          fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
         ),
       ),
     );
@@ -530,103 +520,108 @@ class _InventarioScreenState extends State<InventarioScreen> {
             ),
           )
         else ...[
-          SizedBox(
-            width: double.infinity,
-            child: Card(
-              elevation: 0,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                side: BorderSide(
-                  color: esVistaCaducadas
-                      ? const Color(0xFFFCA5A5)
-                      : const Color(0xFFE5E7EB),
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                elevation: 0,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(
+                    color: esVistaCaducadas
+                        ? const Color(0xFFFCA5A5)
+                        : const Color(0xFFE5E7EB),
+                  ),
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: const [
-                    DataColumn(label: Text('ID')),
-                    DataColumn(label: Text('Tipo')),
-                    DataColumn(label: Text('Volumen')),
-                    DataColumn(label: Text('Donante')),
-                    DataColumn(label: Text('Ubicación')),
-                    DataColumn(label: Text('Extracción')),
-                    DataColumn(label: Text('Caducidad')),
-                    DataColumn(label: Text('Estado')),
-                    DataColumn(label: Text('Acciones')),
-                  ],
-                  rows: filtradas.map((unidad) {
-                    return DataRow(
-                      color: unidad.estaVencida
-                          ? const WidgetStatePropertyAll(Color(0xFFFFF5F5))
-                          : null,
-                      cells: [
-                        DataCell(Text('#${unidad.id}')),
-                        DataCell(
-                          Text(
-                            unidad.tipoSangre,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        DataCell(Text('${unidad.cantidadMl} ml')),
-                        DataCell(Text(unidad.donante)),
-                        DataCell(Text(unidad.ubicacion)),
-                        DataCell(Text(unidad.fechaExtraccion)),
-                        DataCell(
-                          Text(
-                            unidad.fechaCaducidad,
-                            style: TextStyle(
-                              color: unidad.estaVencida
-                                  ? const Color(0xFFB71C1C)
-                                  : Colors.black87,
-                              fontWeight: unidad.estaVencida
-                                  ? FontWeight.w700
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                        DataCell(_badgeVigencia(unidad)),
-                        DataCell(
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                tooltip: 'Editar unidad',
-                                icon: const Icon(Icons.edit_outlined, size: 20),
-                                onPressed: () => _editarUnidad(unidad),
-                              ),
-                              IconButton(
-                                tooltip: 'Retirar del inventario',
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  size: 20,
-                                  color: Color(0xFFB71C1C),
-                                ),
-                                onPressed: () => _retirarUnidad(unidad),
-                              ),
-                            ],
-                          ),
-                        ),
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columnSpacing: 24,
+                      horizontalMargin: 16,
+                      columns: const [
+                        DataColumn(label: Text('ID')),
+                        DataColumn(label: Text('Tipo')),
+                        DataColumn(label: Text('Volumen')),
+                        DataColumn(label: Text('Donante')),
+                        DataColumn(label: Text('Ubicación')),
+                        DataColumn(label: Text('Extracción')),
+                        DataColumn(label: Text('Caducidad')),
+                        DataColumn(label: Text('Estado')),
+                        DataColumn(label: Text('Acciones')),
                       ],
-                    );
-                  }).toList(),
+                      rows: filtradas.map((unidad) {
+                        return DataRow(
+                          color: unidad.estaVencida
+                              ? const WidgetStatePropertyAll(Color(0xFFFFF5F5))
+                              : null,
+                          cells: [
+                            DataCell(Text('#${unidad.id}')),
+                            DataCell(
+                              Text(
+                                unidad.tipoSangre,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            DataCell(Text('${unidad.cantidadMl} ml')),
+                            DataCell(Text(unidad.donante)),
+                            DataCell(Text(unidad.ubicacion)),
+                            DataCell(Text(unidad.fechaExtraccion)),
+                            DataCell(
+                              Text(
+                                unidad.fechaCaducidad,
+                                style: TextStyle(
+                                  color: unidad.estaVencida
+                                      ? const Color(0xFFB71C1C)
+                                      : Colors.black87,
+                                  fontWeight: unidad.estaVencida
+                                      ? FontWeight.w700
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                            DataCell(_badgeVigencia(unidad)),
+                            DataCell(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Editar unidad',
+                                    icon: const Icon(Icons.edit_outlined, size: 20),
+                                    onPressed: () => _editarUnidad(unidad),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Retirar del inventario',
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      size: 20,
+                                      color: Color(0xFFB71C1C),
+                                    ),
+                                    onPressed: () => _retirarUnidad(unidad),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-          if (filtradas.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text(
-                esVistaCaducadas
-                    ? 'No hay unidades caducadas registradas.'
-                    : 'No hay unidades vigentes para el filtro seleccionado.',
-                style: const TextStyle(color: Colors.black54),
+            if (filtradas.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  esVistaCaducadas
+                      ? 'No hay unidades caducadas registradas.'
+                      : 'No hay unidades vigentes para el filtro seleccionado.',
+                  style: const TextStyle(color: Colors.black54),
+                ),
               ),
-            ),
-        ],
+          ],
       ],
     );
   }
