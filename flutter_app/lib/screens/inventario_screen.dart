@@ -286,18 +286,19 @@ class _InventarioScreenState extends State<InventarioScreen> {
         bold: true,
       );
     }
-
-    if (unidad.venceHoy) {
+    final dias = unidad.diasRestantes;
+// Criterio 1: Caducan hoy -> Rojo
+    if (unidad.venceHoy || (dias != null && dias <= 1)) {
       return _buildChip(
         texto: 'Vence hoy',
-        bg: const Color(0xFFFEF3C7),
-        border: const Color(0xFFFCD34D),
-        fg: const Color(0xFF92400E),
+        bg: const Color(0xFFFEE2E2),
+        border: const Color(0xFFFCA5A5),
+        fg: const Color(0xFF991B1B),
         bold: true,
       );
     }
+// Criterio 2: Hasta 3 días de antelación -> Naranjo
 
-    final dias = unidad.diasRestantes;
     if (dias != null && dias <= 3) {
       return _buildChip(
         texto: 'Por vencer ($dias d)',
@@ -307,11 +308,23 @@ class _InventarioScreenState extends State<InventarioScreen> {
         bold: true,
       );
     }
+    // Criterio 3: En una semana más (4 a 7 días) -> Verde
+    if (dias != null && dias > 3 && dias <= 7) {
+      return _buildChip(
+        texto: 'Por vencer ($dias d)',
+        bg: const Color(0xFFDCFCE7),
+        border: const Color(0xFF86EFAC),
+        fg: const Color(0xFF166534),
+        bold: true,
+      );
+    }
 
+    // Criterio 4: Más de 7 días -> Color default (gris/neutro limpio)
     return _buildChip(
       texto: dias != null ? 'Vigente ($dias d)' : 'Vigente',
-      bg: const Color(0xFFDCFCE7),
-      fg: const Color(0xFF166534),
+      bg: const Color(0xFFF3F4F6),
+      border: const Color(0xFFD1D5DB),
+      fg: const Color(0xFF374151),
       bold: false,
     );
   }
